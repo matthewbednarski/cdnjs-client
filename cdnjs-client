@@ -56,27 +56,21 @@ function get_resolved {
 function get {
 	local name=$1
 	local version=$2 
+	local asset_dir=$(dirname $3)
+	local asset_file=$(basename $3)
 	local file="$3"
-	local create=$4
-	local type=$5
 	local save_dir=
 	local fetch_url=
-	if [[ "$has_file_obj" == "true" ]]; then 
-		local outpath=$(echo $file | jq -r '.outpath')
-		local file=$(echo $file | jq -r '.file')
-		local url=$(echo $file | jq -r '.url')
-		local save_dir=$dir/$outpath
-		local fetch_url=$url
+
+	if [[ "$asset_dir" != "." ]]; then
+		local save_dir=$dir/$name/$version/$asset_dir
+		local fetch_url=$url/$name/$version/$file
 	else
-		if [[ "$create" == "true" ]]; then
-			local save_dir=$dir/$name/$version/$type
-			local fetch_url=$url/$name/$version/$type/$file
-		else
-			local save_dir=$dir/$name/$version
-			local fetch_url=$url/$name/$version/$file
-		fi
+		local save_dir=$dir/$name/$version
+		local fetch_url=$url/$name/$version/$file
 	fi
-	get_resolved "$file" "$save_dir" "$fetch_url"
+
+	get_resolved "$asset_file" "$save_dir" "$fetch_url"
 	return $?
 }
 
@@ -99,23 +93,12 @@ function processFiles {
 	IFS=$oifs
 	return $ret
 }
-function get_locales {
-	get $@ "locales"
+
+function get_assets {
+	get $@
 	return $?
 }
-function get_fonts {
-	get $@ "fonts"
-	return $?
-}
-function get_js {
-	get $@ "js"
-	return $?
-}
-function get_css {
-	get $@ "css"
-	return $?
-}
-	
+
 search-cdnjs (){
 	local results=$(wget -qO- https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description | jq -r '.results')
 	echo -n $results
@@ -146,118 +129,25 @@ sync-files () {
 			lib=$d
 			part=$(echo $deps | jq -r '.["'$d'"]')
 			version=$(echo $part | jq -r '.["version"]')
-			js=$(echo $part | jq -r '.["js"]?')
-			css=$(echo $part | jq -r '.["css"]?')
-			fonts=$(echo $part | jq -r '.["fonts"]?')
-			locales=$(echo $part | jq -r '.["locales"]?')
-			create_locales_dir=false
-			localesA=
-			if [[ "$locales" == "null" ]]; then
-				create_locales_dir=false
+			assets=$(echo $part | jq -r '.["files"]?')
+
+			create_assets_dir=false
+			assetsA=
+			if [[ "$assets" == "null" ]]; then
+				create_assets_dir=false
 			else
-				localesAFiles=$(echo $locales | jq -r -c '.. | select(has("file")?)')
-				localesA=$(echo $locales | jq -r '.[] | select( type == "string") ')
-				create_locales_dir=$(echo $part | jq -r '.["create-locales-dir"]?')
-				if [[ "$create_locales_dir" == "null" ]]; then
-					create_locales_dir=true
-				fi
+				assetsAFiles=$(echo $assets | jq -r -c '.. | select(has("file")?)')
+				assetsA=$(echo $assets | jq -r '.[] | select( type == "string") ')
 			fi
-			create_fonts_dir=false
-			fontsA=
-			if [[ "$fonts" == "null" ]]; then
-				create_fonts_dir=false
-			else
-				fontsAFiles=$(echo $fonts | jq -r -c '.. | select(has("file")?)')
-				fontsA=$(echo $fonts | jq -r '.[] | select( type == "string") ')
-				create_fonts_dir=$(echo $part | jq -r '.["create-fonts-dir"]?')
-				if [[ "$create_fonts_dir" == "null" ]]; then
-					create_fonts_dir=true
-				fi
-			fi
-			create_css_dir=false
-			cssA=
-			if [[ "$css" == "null" ]]; then
-				create_css_dir=false
-			else
-				cssAFiles=$(echo $css | jq -r -c '.. | select(has("file")?)')
-				cssA=$(echo $css | jq -r '.[] | select( type == "string") ')
-				create_css_dir=$(echo $part | jq -r '.["create-css-dir"]?')
-				if [[ "$create_css_dir" == "null" ]]; then
-					create_css_dir=true
-				fi
-			fi
-			create_js_dir=false
-			jsA=
-			if [[ "$js" == "null" ]]; then
-				create_js_dir=false
-			else
-				jsAFiles=$(echo $js | jq -r -c '.. | select(has("file")?)')
-				jsA=$(echo $js | jq -r '.[] | select( type == "string") ')
-				create_js_dir=$(echo $part | jq -r '.["create-js-dir"]?')
-				if [[ "$create_js_dir" == "null" ]]; then
-					create_js_dir=true
-				fi
-			fi
-			if [[ "" != "$localesAFiles" ]]; then
-				processFiles "$localesAFiles"
+			if [[ "" != "$assetsAFiles" ]]; then
+				processFiles "$assetsAFiles"
 				ret=$?
 			fi
 			if [[ "$ret" != "0" ]]; then
 				break
 			fi
-			if [[ "" != "$fontsAFiles" ]]; then
-				processFiles "$fontsAFiles"
-				ret=$?
-			fi
-			if [[ "$ret" != "0" ]]; then
-				break
-			fi
-			if [[ "" != "$cssAFiles" ]]; then
-				processFiles "$cssAFiles"
-				ret=$?
-			fi
-			if [[ "$ret" != "0" ]]; then
-				break
-			fi
-			if [[ "" != "$jsAFiles" ]]; then
-				processFiles "$jsAFiles"
-				ret=$?
-			fi
-			if [[ "$ret" != "0" ]]; then
-				break
-			fi
-			for _locale in $localesA; do
-				get_locales "$lib" "$version" "$_locale" "$create_locales_dir"
-				ret=$?
-				if [[ "$ret" != "0" ]]; then
-					break
-				fi
-			done
-			if [[ "$ret" != "0" ]]; then
-				break
-			fi
-			for _font in $fontsA; do
-				get_fonts "$lib" "$version" "$_font" "$create_fonts_dir"
-				ret=$?
-				if [[ "$ret" != "0" ]]; then
-					break
-				fi
-			done
-			if [[ "$ret" != "0" ]]; then
-				break
-			fi
-			for _js in $jsA; do
-				get_js "$lib" "$version" "$_js" "$create_js_dir"
-				ret=$?
-				if [[ "$ret" != "0" ]]; then
-					break
-				fi
-			done
-			if [[ "$ret" != "0" ]]; then
-				break
-			fi
-			for _css in $cssA; do
-				get_css "$lib" "$version" "$_css" "$create_css_dir"
+			for _assets in $assetsA; do
+				get_assets "$lib" "$version" "$_assets" 
 				ret=$?
 				if [[ "$ret" != "0" ]]; then
 					break
