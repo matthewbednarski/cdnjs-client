@@ -1,7 +1,7 @@
 
 # Cdnjs-client
 
-Initially it was a client for [cdnjs](https://cdnjs.com/) but it can handle any `GET`'able, publicly-available resource.
+Initially it was a client for [cdnjs](https://cdnjs.com/) but it can handle any `GET`'able, publicly-available resources.
 
 ## Configuration example:
 
