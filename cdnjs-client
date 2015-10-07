@@ -1,0 +1,344 @@
+#!/bin/bash
+
+##########
+#
+# parameters:
+#     conf: (required) points a cdnjs-client.json file; eg. [cdnjs-client.json](https://gist.github.com/matthewbednarski/30dd4b65221a8c8c67ee)
+#
+# requires: jq, wget
+#
+##########
+	
+SWITCH="\e["
+NORMAL="${SWITCH}0m"
+YELLOW="${SWITCH}33m"
+RED="${SWITCH}31m"
+GREEN="${SWITCH}32m"
+BLUE="${SWITCH}34m"
+	
+function warn {
+	echo -e $YELLOW$@$NORMAL
+}
+function info {
+	echo -e $BLUE$@$NORMAL
+}
+function green {
+	echo -e $GREEN$@$NORMAL
+}
+function error {
+	echo -e $RED$@$NORMAL
+}
+
+function get_resolved {
+	local save_dir_dest="$2"
+	local save_dir="$tmpdir/$2"
+	local save_file="$save_dir"/$1
+	# echo $save_file_tmp
+	local fetch_url="$3"
+	if [[ ! -d "$save_dir" ]]; then
+		mkdir -p "$save_dir"
+	fi
+	if [[ -f "$save_file" ]]; then
+		rm -Rf "$save_file"
+	fi
+	info "Fetching $RED$1$BLUE to $GREEN$save_dir$BLUE"
+	# echo -e $GREEN
+	wget -q -O "$save_file" $fetch_url
+	# echo -e $NORMAL
+	local ret=$?
+	if [[ "$ret" != "0" ]]; then
+		error "Could not download file $BLUE$1" 
+	else
+		info "Success"
+	fi
+	return $ret
+}
+function get {
+	local name=$1
+	local version=$2 
+	local file="$3"
+	local create=$4
+	local type=$5
+	local save_dir=
+	local fetch_url=
+	if [[ "$has_file_obj" == "true" ]]; then 
+		local outpath=$(echo $file | jq -r '.outpath')
+		local file=$(echo $file | jq -r '.file')
+		local url=$(echo $file | jq -r '.url')
+		local save_dir=$dir/$outpath
+		local fetch_url=$url
+	else
+		if [[ "$create" == "true" ]]; then
+			local save_dir=$dir/$name/$version/$type
+			local fetch_url=$url/$name/$version/$type/$file
+		else
+			local save_dir=$dir/$name/$version
+			local fetch_url=$url/$name/$version/$file
+		fi
+	fi
+	get_resolved "$file" "$save_dir" "$fetch_url"
+	return $?
+}
+
+function processFiles {
+	local files="$1"
+	oifs=$IFS
+	IFS=$'\n'
+	local ret=1
+	for fileObj in $files; do
+		warn "Custom location"
+		local t_outpath=$(echo $fileObj | jq -r '.outpath')
+		local t_file=$(echo $fileObj | jq -r '.file')
+		local t_url=$(echo $fileObj | jq -r '.url')
+		get_resolved "$t_file" "$dir/$t_outpath" $t_url
+		ret=$?
+		if [[ "$ret" != "0" ]]; then
+			break
+		fi
+	done
+	IFS=$oifs
+	return $ret
+}
+function get_locales {
+	get $@ "locales"
+	return $?
+}
+function get_fonts {
+	get $@ "fonts"
+	return $?
+}
+function get_js {
+	get $@ "js"
+	return $?
+}
+function get_css {
+	get $@ "css"
+	return $?
+}
+	
+search-cdnjs (){
+	local results=$(wget -qO- https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description | jq -r '.results')
+	echo -n $results
+}
+
+sync-files () {
+	conf=$1
+	shift
+	
+	tmpdir=$(mktemp -d -t)
+	ret=0
+	loop=0
+	repos=$(jq -r '. as $in| keys[]' $conf)
+	for repo in $repos; do
+		cdn=$(jq .$repo $conf)
+		url=$(echo $cdn | jq -r .root)
+		dir=$(echo $cdn | jq -r '.["relative-location"]')
+		deps=$(echo $cdn | jq -r .dependencies)
+		keys=$(echo $deps | jq -r '. as $in| keys[]')
+		if [[ "$loop" != "0" ]]; then
+			echo -e
+		fi
+		((loop++))
+		green "Repo: $BLUE$repo$NORMAL"
+		green "Url: $BLUE$url$NORMAL"
+		echo -e
+		for d in $keys; do
+			lib=$d
+			part=$(echo $deps | jq -r '.["'$d'"]')
+			version=$(echo $part | jq -r '.["version"]')
+			js=$(echo $part | jq -r '.["js"]?')
+			css=$(echo $part | jq -r '.["css"]?')
+			fonts=$(echo $part | jq -r '.["fonts"]?')
+			locales=$(echo $part | jq -r '.["locales"]?')
+			create_locales_dir=false
+			localesA=
+			if [[ "$locales" == "null" ]]; then
+				create_locales_dir=false
+			else
+				localesAFiles=$(echo $locales | jq -r -c '.. | select(has("file")?)')
+				localesA=$(echo $locales | jq -r '.[] | select( type == "string") ')
+				create_locales_dir=$(echo $part | jq -r '.["create-locales-dir"]?')
+				if [[ "$create_locales_dir" == "null" ]]; then
+					create_locales_dir=true
+				fi
+			fi
+			create_fonts_dir=false
+			fontsA=
+			if [[ "$fonts" == "null" ]]; then
+				create_fonts_dir=false
+			else
+				fontsAFiles=$(echo $fonts | jq -r -c '.. | select(has("file")?)')
+				fontsA=$(echo $fonts | jq -r '.[] | select( type == "string") ')
+				create_fonts_dir=$(echo $part | jq -r '.["create-fonts-dir"]?')
+				if [[ "$create_fonts_dir" == "null" ]]; then
+					create_fonts_dir=true
+				fi
+			fi
+			create_css_dir=false
+			cssA=
+			if [[ "$css" == "null" ]]; then
+				create_css_dir=false
+			else
+				cssAFiles=$(echo $css | jq -r -c '.. | select(has("file")?)')
+				cssA=$(echo $css | jq -r '.[] | select( type == "string") ')
+				create_css_dir=$(echo $part | jq -r '.["create-css-dir"]?')
+				if [[ "$create_css_dir" == "null" ]]; then
+					create_css_dir=true
+				fi
+			fi
+			create_js_dir=false
+			jsA=
+			if [[ "$js" == "null" ]]; then
+				create_js_dir=false
+			else
+				jsAFiles=$(echo $js | jq -r -c '.. | select(has("file")?)')
+				jsA=$(echo $js | jq -r '.[] | select( type == "string") ')
+				create_js_dir=$(echo $part | jq -r '.["create-js-dir"]?')
+				if [[ "$create_js_dir" == "null" ]]; then
+					create_js_dir=true
+				fi
+			fi
+			if [[ "" != "$localesAFiles" ]]; then
+				processFiles "$localesAFiles"
+				ret=$?
+			fi
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+			if [[ "" != "$fontsAFiles" ]]; then
+				processFiles "$fontsAFiles"
+				ret=$?
+			fi
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+			if [[ "" != "$cssAFiles" ]]; then
+				processFiles "$cssAFiles"
+				ret=$?
+			fi
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+			if [[ "" != "$jsAFiles" ]]; then
+				processFiles "$jsAFiles"
+				ret=$?
+			fi
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+			for _locale in $localesA; do
+				get_locales "$lib" "$version" "$_locale" "$create_locales_dir"
+				ret=$?
+				if [[ "$ret" != "0" ]]; then
+					break
+				fi
+			done
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+			for _font in $fontsA; do
+				get_fonts "$lib" "$version" "$_font" "$create_fonts_dir"
+				ret=$?
+				if [[ "$ret" != "0" ]]; then
+					break
+				fi
+			done
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+			for _js in $jsA; do
+				get_js "$lib" "$version" "$_js" "$create_js_dir"
+				ret=$?
+				if [[ "$ret" != "0" ]]; then
+					break
+				fi
+			done
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+			for _css in $cssA; do
+				get_css "$lib" "$version" "$_css" "$create_css_dir"
+				ret=$?
+				if [[ "$ret" != "0" ]]; then
+					break
+				fi
+			done
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+		done
+		if [[ "$ret" != "0" ]]; then
+			break
+		fi
+	done
+	if [[ "$ret" != "0" ]]; then
+		error "Exiting with status code $ret"
+		/bin/rm -Rf $tmpdir
+	else
+		info "Copying from temp directory $tmpdir"
+		/bin/cp -Rf $tmpdir/* .
+		ret=$?
+		if [[ "$ret" == "0" ]]; then
+			info "Deleting temp directory $tmpdir"
+			/bin/rm -Rf $tmpdir
+		fi
+	fi
+	return $ret
+}
+clean () {
+	locations=$(jq -r -c '.. | select(has("relative-location"?))["relative-location"]' "$conf")
+	oifs=$IFS
+	IFS=$'\n'
+	for d in $locations; do
+		if [[ -d "$d" ]]; then
+			echo -e $BLUE'Cleaning dir '$d'.'$NORMAL
+			rm -Rf "$d"
+		else
+			echo -e $RED'Dir '$d' does not exist.'$NORMAL
+		fi
+	done
+	IFS=$oifs
+	return $?
+}
+
+
+unset DO_SEARCH DO_CLEAN DO_SYNC
+while [[ $1 ]]; do
+	case "$1" in
+		-S|--search|search|--find|find)     DO_SEARCH=1;;
+		-C|--clean|clean)                   DO_CLEAN=1;;
+		--sync|sync)                        DO_SYNC=1;;
+		*)                                  if [[ "$ARGS" == "" ]]; then ARGS="$1"; else ARGS="$ARGS $1"; fi;
+	esac
+	shift
+done
+
+(( ! DO_SYNC && ! DO_SEARCH && ! DO_CLEAN )) && DO_SYNC=1
+(( DO_SYNC || DO_CLEAN )) && unset DO_SEARCH
+if (( DO_SYNC || DO_CLEAN )) && [[ ! -f "$ARGS" ]]; then
+	error "A cdnjs-client configuration file is required!"
+	exit 1
+fi
+if [[ "$DO_CLEAN" == "1" ]] && [[ -f "$ARGS" ]]; then
+	echo "CLEANING file $ARGS"
+	clean "$ARGS"
+	fret=$?
+	if [[ "$fret" != "0" ]]; then
+		error "Cleaning was not successful"
+		exit $fret
+	fi
+fi
+if [[ "$DO_SYNC" == "1" ]] && [[ -f "$ARGS" ]]; then
+	echo "SYNCING file $ARGS"
+	sync-files "$ARGS"
+	exit $?
+fi
+(( DO_SEARCH  )) && unset DO_SYNC
+if (( $DO_SEARCH )); then
+	echo "SEARCHING for $ARGS"
+	res=$(search-cdnjs "$ARGS")
+	fret=$?
+	echo $res | jq '.'
+	exit $fret
+fi
+
