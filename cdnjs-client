@@ -29,6 +29,31 @@ function error {
 	echo -e $RED$@$NORMAL
 }
 
+
+search_with_version () {
+	local srch="$1"
+	local vrs="$2"
+    output=$(wget -qO- https://api.cdnjs.com/libraries\?search\=$srch\&fields\=version,assets )
+    item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
+    ret=$? 
+    echo $item | jq '.'
+    return $ret
+}
+###
+# Select all results and put together an object composed of :
+#   name       .name
+#   version    .version
+#   files      .assets[1].files   -> selects files of latest version
+###
+search_without_version () {
+	local srch="$1"
+    output=$(wget -qO- https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets )
+	item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
+    ret=$? 
+    echo -e "$item" | jq '.'
+    return $ret
+}
+
 function get_resolved {
 	local save_dir_dest="$2"
 	local save_dir="$tmpdir/$2"
@@ -192,14 +217,15 @@ clean () {
 }
 
 
-unset DO_SEARCH DO_CLEAN DO_SYNC DO_HELP
+unset DO_SEARCH DO_CLEAN DO_SYNC DO_HELP DO_ADD HAS_CONF CONF
 while [[ $1 ]]; do
 	case "$1" in
+		--conf)                             if [[ -f "$2" ]]; then HAS_CONF=1; CONF="$2"; shift; fi;;
 		-f|--search|search|--find|find)     DO_SEARCH=1;;
 		-c|--clean|clean)                   DO_CLEAN=1;;
 		-s|--sync|sync)                     DO_SYNC=1;;
-		-h|-?|--help|help)                  DO_HELP=1;;
-		# -a|--add|add)                       DO_ADD=1;;
+		-a|--add|add|+)                     DO_ADD=1;;
+		-h|-\?|--help|help)                  DO_HELP=1;;
 		*)                                  if [[ "$ARGS" == "" ]]; then ARGS="$1"; else ARGS="$ARGS $1"; fi;
 	esac
 	shift
@@ -208,43 +234,86 @@ done
 usage (){
 	echo -e "Usage: $(basename ${BASH_SOURCE[0]}) [OPTIONS] [ARGS]:"
 	echo -e
+	echo -e "    --conf [CONFIG FILE]            use a custom config file"
 	echo -e "    --search, search [ARGS]         perform query on api.cdnjs.com"
 	echo -e "    -f, --find, find [ARGS]         same as \"--search [ARGS]\""
 	echo -e "    -c, --clean, clean [ARGS]       clean configured relative-location"
 	echo -e "    -s, --sync, sync [ARGS]         syncronize to configured relative-locations"
+	echo -e "    -a, + [LIB[+VERSION]] [GROUP]   add library with optional version to optional group"
+	echo -e "    --add, add                      same as \"--add\""
 	echo -e "    -h, -?, --help, help            print usage"
 }
+if (( ! HAS_CONF )); then
+	CONF='.cdnjs-conf'
+	info using default config: $CONF
+fi
 if (( DO_HELP )); then
 	usage
 	exit 0
 fi
 
-(( ! DO_SYNC && ! DO_SEARCH && ! DO_CLEAN )) && DO_SYNC=1
+(( ! DO_SYNC && ! DO_SEARCH && ! DO_CLEAN  && ! DO_ADD )) && DO_SYNC=1
 (( DO_SYNC || DO_CLEAN )) && unset DO_SEARCH
 if (( DO_SYNC || DO_CLEAN )) && [[ ! -f "$ARGS" ]]; then
 	error "A cdnjs-client configuration file is required!"
 	exit 1
 fi
-if [[ "$DO_CLEAN" == "1" ]] && [[ -f "$ARGS" ]]; then
-	echo "CLEANING file $ARGS"
-	clean "$ARGS"
+if [[ "$DO_CLEAN" == "1" ]] && [[ -f "$CONF" ]]; then
+	info "CLEANING file $CONF"
+	clean "$CONF"
 	fret=$?
 	if [[ "$fret" != "0" ]]; then
 		error "Cleaning was not successful"
 		exit $fret
 	fi
 fi
-if [[ "$DO_SYNC" == "1" ]] && [[ -f "$ARGS" ]]; then
-	echo "SYNCING file $ARGS"
-	sync-files "$ARGS"
+if [[ "$DO_SYNC" == "1" ]] && [[ -f "$CONF" ]]; then
+	info "SYNCING file $CONF"
+	sync-files "$CONF"
 	exit $?
 fi
 (( DO_SEARCH  )) && unset DO_SYNC
 if (( $DO_SEARCH )); then
-	echo "SEARCHING for $ARGS"
+	info "SEARCHING for $ARGS"
 	res=$(search-cdnjs "$ARGS")
 	fret=$?
 	echo $res | jq '.'
 	exit $fret
 fi
 
+if (( $DO_ADD )); then
+	info "ADDING $ARGS"
+	
+    param="$ARGS"
+    search="${param%+*}"
+    version="${param#*+}"
+    
+    unset HAS_VERS
+    if [[ "$param" != "$search" ]]; then
+    	HAS_VERS=1
+    fi
+	tmpconf=$(mktemp )
+    if (( HAS_VERS )); then
+    	echo $HAS_VERS
+		val=$(search_with_version "$search" "$version")
+		val=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF" )
+		fret=$?
+    else
+    	echo $HAS_VERS
+		val=$(search_without_version "$search" )
+		val=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF")
+		fret=$?
+    fi
+    if [[ "$fret" == "0" ]]; then 
+		echo $val | jq '.' > $tmpconf
+		fret=$?
+    	if [[ "$fret" == "0" ]]; then 
+    		mv "$tmpconf" "$CONF"
+    		fret=$?
+    		if [[ "$fret" != "0" ]]; then 
+    			rm $tmpconf
+			fi
+		fi
+	fi
+	exit $fret
+fi
