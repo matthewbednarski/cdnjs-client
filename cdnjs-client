@@ -13,17 +13,17 @@ SWITCH="\e["
 NORMAL="${SWITCH}0m"
 YELLOW="${SWITCH}33m"
 RED="${SWITCH}31m"
-GREEN="${SWITCH}32m"
-BLUE="${SWITCH}34m"
+GRN="${SWITCH}32m"
+BLU="${SWITCH}34m"
 	
 function warn {
 	echo -e $YELLOW$@$NORMAL
 }
 function info {
-	echo -e $BLUE$@$NORMAL
+	echo -e $BLU$@$NORMAL
 }
 function green {
-	echo -e $GREEN$@$NORMAL
+	echo -e $GRN$@$NORMAL
 }
 function error {
 	echo -e $RED$@$NORMAL
@@ -244,7 +244,7 @@ usage (){
 	echo -e "    -h, -?, --help, help            print usage"
 }
 if (( ! HAS_CONF )); then
-	CONF='.cdnjs-conf'
+	CONF='.cdnjs'
 	info using default config: $CONF
 fi
 if (( DO_HELP )); then
@@ -282,8 +282,6 @@ if (( $DO_SEARCH )); then
 fi
 
 if (( $DO_ADD )); then
-	info "ADDING $ARGS"
-	
     param="$ARGS"
     search="${param%+*}"
     version="${param#*+}"
@@ -294,13 +292,19 @@ if (( $DO_ADD )); then
     fi
 	tmpconf=$(mktemp )
     if (( HAS_VERS )); then
-    	echo $HAS_VERS
 		val=$(search_with_version "$search" "$version")
+		tret=$?
+		if [[ "$tret" == "0" ]]; then
+			info "Adding $search version: $RED $(echo $val | jq -r --arg key "$search" '.[ $key ].version')"
+		fi
 		val=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF" )
 		fret=$?
     else
-    	echo $HAS_VERS
 		val=$(search_without_version "$search" )
+		tret=$?
+		if [[ "$tret" == "0" ]]; then
+			info "Adding $search version: $RED $(echo $val | jq -r --arg key "$search" '.[ $key ].version')"
+		fi
 		val=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF")
 		fret=$?
     fi
@@ -308,6 +312,7 @@ if (( $DO_ADD )); then
 		echo $val | jq '.' > $tmpconf
 		fret=$?
     	if [[ "$fret" == "0" ]]; then 
+    		info "Successfully updated$GRN cdnjs$BLU config $GRN$CONF$BLU"
     		mv "$tmpconf" "$CONF"
     		fret=$?
     		if [[ "$fret" != "0" ]]; then 
