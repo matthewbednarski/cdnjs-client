@@ -1,5 +1,5 @@
 {
-    "cloudflare": {
+    "cdnjs": {
         "root": "https://cdnjs.cloudflare.com/ajax/libs",
         "relative-location": "src/test/webapp/motive/libs",
         "dependencies": {
