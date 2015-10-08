@@ -1,4 +1,20 @@
 {
+  "cdnjs111": {
+    "root": "https://cdnjs.cloudflare.com/ajax/libs",
+    "relative-location": "src/test/webapp/test",
+    "dependencies": {
+      "font-awesome": {
+        "version": "4.4.0",
+        "files": [
+          "css/font-awesome.min.css",
+          "fonts/fontawesome-webfont.woff",
+          "fonts/fontawesome-webfont.woff2",
+          "fonts/fontawesome-webfont.eot",
+          "fonts/fontawesome-webfont.ttf"
+        ]
+      }
+	}
+  },
   "cdnjs": {
     "root": "https://cdnjs.cloudflare.com/ajax/libs",
     "relative-location": "src/test/webapp/motive/libs",
