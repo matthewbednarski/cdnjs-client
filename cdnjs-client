@@ -170,11 +170,13 @@ sync-files () {
 	loop=0
 	repos=$(jq -r '. as $in| keys[]' $conf)
 	for repo in $repos; do
+		debug "Here"
 		cdn=$(jq --arg repo "$repo" '.[($repo)]' $conf)
 		url=$(echo $cdn | jq -r .root)
 		dir=$(echo $cdn | jq -r '.["relative-location"]')
 		deps=$(echo $cdn | jq -r .dependencies)
 		keys=$(echo $deps | jq -r '. as $in| keys[]')
+		debug "Here"
 		if [[ "$loop" != "0" ]]; then
 			echo -e
 		fi
