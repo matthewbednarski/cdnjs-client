@@ -168,7 +168,8 @@ sync-files () {
 	tmpdir=$(mktemp -d -t)
 	ret=0
 	loop=0
-	repos=$(jq -r '. as $in| keys[]' "$conf")
+	repos=$(jq '. as $in| keys[]' "$conf")
+	jq '. as $in| keys[]' "$conf"
 	echo $repos
 	for repo in $repos; do
 		# debug $repo
