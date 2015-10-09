@@ -188,9 +188,7 @@ sync-files () {
 		echo -e
 		for d in $keys; do
 			lib=$d
-			echo $lib
-			part=$(echo "$deps" | jq -r --arg depk "$(echo $lib)" '.[($depk)]')
-			echo "$part"
+			part="$(echo "$deps" | jq -r --arg depk "$(echo $lib)" '.[($depk)]')"
 			version="$(echo "$part" | jq -r '.["version"]')"
 			assets="$(echo "$part" | jq -r '.["files"]?')"
 
@@ -199,8 +197,8 @@ sync-files () {
 			if [[ "$assets" == "null" ]]; then
 				create_assets_dir=false
 			else
-				assetsAFiles=$(echo $assets | jq -r -c '.. | select(has("file")?)')
-				assetsA=$(echo $assets | jq -r '.[] | select( type == "string") ')
+				assetsAFiles="$(echo $assets | jq -r -c '.. | select(has("file")?)')"
+				assetsA="$(echo $assets | jq -r '.[] | select( type == "string") ')"
 			fi
 			if [[ "" != "$assetsAFiles" ]]; then
 				processFiles "$assetsAFiles"
