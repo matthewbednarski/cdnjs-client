@@ -187,7 +187,7 @@ sync-files () {
 		echo -e
 		for d in $keys; do
 			lib="$d"
-			debug $(echo "$deps" | jq -r --arg depk "$lib" '.["( $depk )"]')
+			debug $(echo "$deps" | jq -r --arg depk "$lib" '.["( $depk )"] | "$depk"')
 			part=$(echo "$deps" | jq -r --arg depk "$lib" '.["( $depk )"]')
 			version=$(echo "$part" | jq -r '.["version"]')
 			assets=$(echo "$part" | jq -r '.["files"]?')
