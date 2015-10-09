@@ -5,7 +5,7 @@
 # parameters:
 #     conf: (required) points a cdnjs-client.json file; eg. [cdnjs-client.json](https://gist.github.com/matthewbednarski/30dd4b65221a8c8c67ee)
 #
-# requires: jq, wget
+# requires: jq, curl
 #
 ##########
 	
@@ -54,9 +54,13 @@ function error {
 search_with_version () {
 	local srch="$1"
 	local vrs="$2"
-    output=$(wget -qO- https://api.cdnjs.com/libraries\?search\=$srch\&fields\=version,assets )
-    item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
-    ret=$? 
+	if (( DO_VERBOSE )); then
+    	local output=$(curl -X GET https://api.cdnjs.com/libraries\?search\=$srch\&fields\=version,assets )
+	else
+    	local output=$(curl -s -X GET https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets )
+	fi
+    local item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
+    local ret=$? 
     echo $item | jq '.'
     return $ret
 }
@@ -68,9 +72,13 @@ search_with_version () {
 ###
 search_without_version () {
 	local srch="$1"
-    output=$(wget -qO- https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets )
-	item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
-    ret=$? 
+	if (( DO_VERBOSE )); then
+    	local output=$(curl -X GET https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets )
+	else
+    	local output=$(curl -s -X GET https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets )
+	fi
+	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
+    local ret=$? 
     echo -e "$item" | jq '.'
     return $ret
 }
@@ -79,7 +87,6 @@ function get_resolved {
 	local save_dir_dest="$2"
 	local save_dir="$tmpdir/$2"
 	local save_file="$save_dir"/$1
-	# echo $save_file_tmp
 	local fetch_url="$3"
 	if [[ ! -d "$save_dir" ]]; then
 		mkdir -p "$save_dir"
@@ -87,10 +94,13 @@ function get_resolved {
 	if [[ -f "$save_file" ]]; then
 		rm -Rf "$save_file"
 	fi
-	info "Fetching $RED$1$BLU to $GRN$save_dir$BLU"
-	# echo -e $GRN
-	wget -q -O "$save_file" $fetch_url
-	# echo -e $NORMAL
+	if (( DO_VERBOSE )); then
+		info "Fetching $RED$1$BLU to $GRN$save_dir$BLU"
+		curl -X GET $fetch_url > "$save_file" 
+	else
+		info "Fetching $RED$1$BLU"
+		curl -s -X GET $fetch_url > "$save_file" 
+	fi
 	local ret=$?
 	if [[ "$ret" != "0" ]]; then
 		error "Could not download file $BLU$1" 
@@ -146,7 +156,8 @@ function get_assets {
 }
 
 search-cdnjs (){
-	local results=$(wget -qO- https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description | jq -r '.results')
+	# local results=$(wget -qO- https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description | jq -r '.results')
+	local results=$(curl -X GET https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description | jq -r '.results')
 	echo -n $results
 }
 
