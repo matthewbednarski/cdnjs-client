@@ -55,9 +55,9 @@ search_with_version () {
 	local srch="$1"
 	local vrs="$2"
 	if (( DO_VERBOSE )); then
-    	local output=$(curl -X GET https://api.cdnjs.com/libraries\?search\=$srch\&fields\=version,assets )
+    	local output=$(curl -X GET "https://api.cdnjs.com/libraries\?search\=$srch\&fields\=version,assets" )
 	else
-    	local output=$(curl -s -X GET https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets )
+    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets" )
 	fi
     local item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
     local ret=$? 
@@ -73,9 +73,9 @@ search_with_version () {
 search_without_version () {
 	local srch="$1"
 	if (( DO_VERBOSE )); then
-    	local output=$(curl -X GET https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets )
+    	local output=$(curl -X GET "https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets" )
 	else
-    	local output=$(curl -s -X GET https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets )
+    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets" )
 	fi
 	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
     local ret=$? 
@@ -99,7 +99,7 @@ function get_resolved {
 		curl "$(echo $fetch_url)" -o "$save_file" 
 	else
 		info "Fetching $RED$1$BLU"
-		curl -s -g "$fetch_url" > "$save_file" 
+		curl -s "$(echo $fetch_url)" -o "$save_file" 
 	fi
 	local ret=$?
 	if [[ "$ret" != "0" ]]; then
@@ -157,7 +157,7 @@ function get_assets {
 
 search-cdnjs (){
 	# local results=$(wget -qO- https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description | jq -r '.results')
-	local results=$(curl -X GET https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description | jq -r '.results')
+	local results=$(curl -X GET "https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description" | jq -r '.results')
 	echo -n $results
 }
 
