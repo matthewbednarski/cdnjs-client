@@ -330,19 +330,19 @@ if (( $DO_ADD )); then
     if (( HAS_VERS )); then
 		val=$(search_with_version "$search" "$version")
 		tret=$?
-		if [[ "$tret" == "0" ]]; then
-			info "Adding $search version: $RED $(echo $val | jq -r --arg key "$search" '.[ $key ].version')"
-		fi
 		echo $val
+		if [[ "$tret" == "0" ]]; then
+			info "Adding $search version: $RED $(echo "$val" | jq -r --arg key "$search" '.[ $key ].version')"
+		fi
 		val=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF" )
 		fret=$?
     else
 		val=$(search_without_version "$search" )
 		tret=$?
-		if [[ "$tret" == "0" ]]; then
-			info "Adding $search version: $RED $(echo $val | jq -r --arg key "$search" '.[ $key ].version')"
-		fi
 		echo $val
+		if [[ "$tret" == "0" ]]; then
+			info "Adding $search version: $RED $(echo "$val" | jq -r --arg key "$search" '.[ $key ].version')"
+		fi
 		val=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF")
 		fret=$?
     fi
