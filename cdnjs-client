@@ -211,7 +211,7 @@ sync-files () {
 			fi
 			for _assets in $assetsA; do
 				debug "$(echo $lib)" "$version" "$_assets" 
-				get_assets "$lib" "$version" "$_assets" 
+				get_assets "$(echo $lib)" "$version" "$_assets" 
 				ret=$?
 				if [[ "$ret" != "0" ]]; then
 					break
