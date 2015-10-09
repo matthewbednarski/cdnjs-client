@@ -72,10 +72,11 @@ search_with_version () {
 ###
 search_without_version () {
 	local srch="$1"
+	local output=
 	if (( DO_VERBOSE )); then
-    	local output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets"  | jq -r '.' )
+    	output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets"  | jq -r '.' )
 	else
-    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" | jq -r '.'  )
+    	output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" | jq -r '.'  )
 	fi
 	echo "$output"
 	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
