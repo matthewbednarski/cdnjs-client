@@ -74,8 +74,7 @@ search_without_version () {
 	local srch="$1"
 	local output=
 	if (( DO_VERBOSE )); then
-    	curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets"
-		output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )
+		output=$(echo "$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
 		echo "$output"
 	else
     	output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" | jq -r '.'  )
