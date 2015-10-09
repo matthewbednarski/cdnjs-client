@@ -340,8 +340,10 @@ if (( $DO_ADD )); then
 		val=$(search_without_version "$search" )
 		tret=$?
 		if [[ "$tret" == "0" ]]; then
-			info "Adding $search version: $RED $(echo "$val" | jq -r --arg key "$search" '.[ $key ].version')"
+			echo "$val"
+			info "Adding $search version: $RED$(echo "$val" | jq -r --arg key "$search" '.[ $key ].version')"
 		fi
+		echo "$val"
 		valfin=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF")
 		fret=$?
     fi
