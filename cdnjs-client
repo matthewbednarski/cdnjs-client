@@ -175,7 +175,7 @@ sync-files () {
 		# cdn=$(jq -r --arg rep $repo '.[($rep)]' "$conf")
 		echo -e $RED $repo $NORMAL
 		cdn=$(jq -r --arg rep "cdnjs" '.[($rep)]' "$conf")
-		echo -e $RED $cdn $NORMAL
+		echo -e $RED "$cdn" $NORMAL
 		# echo $cdn | jq '.'
 		url=$(echo "$cdn" | jq -r '.root')
 		dir=$(echo "$cdn" | jq -r '.["relative-location"]')
