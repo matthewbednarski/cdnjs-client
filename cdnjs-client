@@ -173,7 +173,7 @@ sync-files () {
 		echo Hey
 		echo $repo
 		# cdn=$(jq -r --arg rep $repo '.[($rep)]' "$conf")
-		echo $RED $repo $NORMAL
+		echo -e $RED $repo $NORMAL
 		cdn=$(jq -r --arg rep "cdnjs" '.[($rep)]' "$conf")
 		echo -e $RED $cdn $NORMAL
 		# echo $cdn | jq '.'
