@@ -97,7 +97,7 @@ function get_resolved {
 	if (( DO_VERBOSE )); then
 		info "Fetching $RED$1$BLU to $GRN$save_dir$BLU from $fetch_url"
 		echo $fetch_url
-		curl -g -X GET "$fetch_url" > "$save_file" 
+		curl -g -X GET "$fetch_url" -o "$save_file" 
 	else
 		info "Fetching $RED$1$BLU"
 		curl -s -g -X GET "$fetch_url" > "$save_file" 
