@@ -34,20 +34,20 @@ BLU="${SWITCH}34m"
 	
 function debug {
 	if (( DO_VERBOSE )); then
-		echo -e $YELLOW$@$NORMAL
+		echo -e $YELLOW"$@"$NORMAL
 	fi
 }
 function warn {
-	echo -e $YELLOW$@$NORMAL
+	echo -e $YELLOW"$@"$NORMAL
 }
 function info {
-	echo -e $BLU$@$NORMAL
+	echo -e $BLU"$@"$NORMAL
 }
 function green {
-	echo -e $GRN$@$NORMAL
+	echo -e $GRN"$@"$NORMAL
 }
 function error {
-	echo -e $RED$@$NORMAL
+	echo -e $RED"$@"$NORMAL
 }
 
 
