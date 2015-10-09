@@ -98,9 +98,11 @@ function get_resolved {
 	fi
 	if (( DO_VERBOSE )); then
 		info "Fetching $RED$1$BLU to $GRN$save_dir$BLU from $fetch_url"
+		echo $fetch_url
 		curl "$(echo $fetch_url)" -o "$save_file" 
 	else
 		info "Fetching $RED$1$BLU"
+		echo $fetch_url
 		curl -s "$(echo $fetch_url)" -o "$save_file" 
 	fi
 	local ret=$?
@@ -156,8 +158,7 @@ function get_assets { get $@
 }
 
 search-cdnjs (){
-	# local results=$(wget -qO- https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description | jq -r '.results')
-	local results=$(curl -X GET "https://api.cdnjs.com/libraries?search=$@&fields=version,description" | jq -r '.results')
+	local results=$(curl -X GET "https://api.cdnjs.com/libraries?search=$@\&fields=version,description" | jq -r '.results')
 	echo -n $results
 }
 
