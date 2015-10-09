@@ -174,7 +174,7 @@ sync-files () {
 		cdn=$(jq -r --arg rep "$repo" '.[($rep)]' "$conf")
 		url=$(echo "$cdn" | jq -r '.root')
 		dir=$(echo "$cdn" | jq -r '.["relative-location"]')
-		deps=$(echo "$cdn" | jq -r '.dependencies')
+		deps="$(echo "$cdn" | jq -r '.dependencies')"
 		debug "$deps"
 		keys=$(echo "$deps" | jq -r '. as $in| keys[]')
 		debug "$keys"
@@ -188,7 +188,7 @@ sync-files () {
 		for d in $keys; do
 			lib=$d
 			debug "$(echo "$deps" | jq -r --arg depk $lib '.[( $depk )] | $depk' )"
-			debug "$(echo "$deps" | jq '.' )"
+			debug "$(echo "$deps" | jq -r --arg depk $lib '.[( $depk )]' )"
 			part=$(echo "$deps" | jq -r --arg depk "$lib" '.[($depk)]')
 			version=$(echo "$part" | jq -r '.["version"]')
 			assets=$(echo "$part" | jq -r '.["files"]?')
