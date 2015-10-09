@@ -55,9 +55,9 @@ search_with_version () {
 	local srch="$1"
 	local vrs="$2"
 	if (( DO_VERBOSE )); then
-    	local output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" | jq -r '.'  )
+    	local output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" | jq -r '.'  )
 	else
-    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" | jq -r '.'  )
+    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" | jq -r '.'  )
 	fi
     local item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
     local ret=$? 
@@ -74,11 +74,11 @@ search_without_version () {
 	local srch="$1"
 	local output=
 	if (( DO_VERBOSE )); then
-    	curl -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" | jq -r '.'
-    	output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets"  | jq -r '.' )
+    	curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" | jq -r '.'
+    	output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets"  | jq -r '.' )
 		echo "$output"
 	else
-    	output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" | jq -r '.'  )
+    	output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" | jq -r '.'  )
 		echo "$output"
 	fi
 	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
@@ -153,9 +153,7 @@ function processFiles {
 	IFS=$oifs
 	return $ret
 }
-
-function get_assets {
-	get $@
+function get_assets { get $@
 	return $?
 }
 
