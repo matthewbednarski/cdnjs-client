@@ -41,7 +41,7 @@ function warn {
 	echo -e $YELLOW"$@"$NORMAL
 }
 function info {
-	echo -e $BLU"$@"$NORMAL
+	echo -e "$@"$NORMAL
 }
 function green {
 	echo -e $GRN"$@"$NORMAL
@@ -101,7 +101,7 @@ function get_resolved {
 		info from$GRN$fetch_url
 		curl "$(echo $fetch_url)" -o "$save_file" 
 	else
-		info "Fetching $RED$1$BLU"
+		nfo "Fetching $RED$1$BLU"
 		curl -s "$(echo $fetch_url)" -o "$save_file" 
 	fi
 	local ret=$?
