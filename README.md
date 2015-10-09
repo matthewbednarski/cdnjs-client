@@ -3,6 +3,26 @@
 
 Initially it was a client for [cdnjs](https://cdnjs.com/) but it can handle any `GET`'able, publicly-available resources.
 
+```sh
+$ cdnjs-client --help
+Usage: cdnjs-client [OPTIONS] [ARGS]:
+
+    Options:
+    --conf [CONFIG FILE]            use a custom config file
+
+    -f, --find, find [ARGS]         perform query on api.cdnjs.com
+        --search, search [ARGS]     same as "--search [ARGS]"
+
+    -c, --clean, clean [ARGS]       clean configured relative-location
+    -s, --sync, sync [ARGS]         syncronize to configured relative-locations
+    -a, + [LIB[+VERSION]] [GROUP]   add library with optional version to optional
+        --add, add                   group
+
+    -v, --verbose, verbose          print debug/verbose output
+        --debug, debug              same as "--verbose"
+    -h, -?, --help, help            print usage
+```
+
 ## Configuration example:
 
 ```json
