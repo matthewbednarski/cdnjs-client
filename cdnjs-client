@@ -95,11 +95,11 @@ function get_resolved {
 		rm -Rf "$save_file"
 	fi
 	if (( DO_VERBOSE )); then
-		info "Fetching $RED$1$BLU to $GRN$save_dir$BLU"
-		curl -X GET $fetch_url > "$save_file" 
+		info "Fetching $RED$1$BLU to $GRN$save_dir$BLU from $fetch_url"
+		curl -X GET "$fetch_url" > "$save_file" 
 	else
 		info "Fetching $RED$1$BLU"
-		curl -s -X GET $fetch_url > "$save_file" 
+		curl -s -X GET "$fetch_url" > "$save_file" 
 	fi
 	local ret=$?
 	if [[ "$ret" != "0" ]]; then
@@ -170,16 +170,11 @@ sync-files () {
 	loop=0
 	repos=$(jq -r '. as $in| keys[]' "$conf" | sed :)
 	for repo in $repos; do
-		debug $repo
 		cdn=$(jq -r --arg rep "cdnjs" '.[($rep)]' "$conf")
-		debug "$cdn"
-		# echo $cdn | jq '.'
 		url=$(echo "$cdn" | jq -r '.root')
 		dir=$(echo "$cdn" | jq -r '.["relative-location"]')
-		debug "Here"
 		deps=$(echo "$cdn" | jq -r '.dependencies')
 		keys=$(echo "$deps" | jq -r '. as $in| keys[]')
-		debug "there"
 		if [[ "$loop" != "0" ]]; then
 			echo -e
 		fi
