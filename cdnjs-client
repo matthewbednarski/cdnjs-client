@@ -97,8 +97,8 @@ function get_resolved {
 		rm -Rf "$save_file"
 	fi
 	if (( DO_VERBOSE )); then
-		info "Fetching $RED$1$BLU to $GRN$save_dir$BLU from $fetch_url"
-		info from$GRN$fetch_url
+		info "Fetching $RED$1$BLU to $GRN$save_dir"
+		info from $GRN$fetch_url
 		curl "$(echo $fetch_url)" -o "$save_file" 
 	else
 		info "Fetching $RED$1$BLU"
