@@ -188,7 +188,7 @@ sync-files () {
 		for d in $keys; do
 			lib="$d"
 			echo "$(echo "$deps" | jq -r '.')"
-			debug $(echo "$deps" | jq -r '.["angular.js"]')
+			debug "$(echo "$deps" | jq -r '.["angular.js"]')"
 			debug $(echo "$deps" | jq -r --arg depk "$lib" '.[($depk)] | $depk')
 			part=$(echo "$deps" | jq -r --arg depk "$lib" '.[($depk)]')
 			version=$(echo "$part" | jq -r '.["version"]')
