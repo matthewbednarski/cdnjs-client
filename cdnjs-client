@@ -162,17 +162,17 @@ search-cdnjs (){
 }
 
 sync-files () {
-	conf=$1
+	conf="$1"
 	shift
 	
 	tmpdir=$(mktemp -d -t)
 	ret=0
 	loop=0
-	repos=$(jq -r '. as $in| keys[]' $conf)
+	repos=$(jq -r '. as $in| keys[]' "$conf")
 	for repo in $repos; do
-		cdn=$(jq --arg repo "$repo" '.[($repo)]' $conf)
-		url=$(echo "$cdn" | jq -r '.root')
+		cdn=$(jq --arg rep "$repo" '.[($rep)]' "$conf")
 		echo $cdn | jq '.'
+		url=$(echo "$cdn" | jq -r '.root')
 		dir=$(echo "$cdn" | jq -r '.["relative-location"]')
 		debug "Here"
 		deps=$(echo "$cdn" | jq -r '.dependencies')
