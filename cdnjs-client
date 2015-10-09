@@ -210,7 +210,8 @@ sync-files () {
 				break
 			fi
 			for _assets in $assetsA; do
-				info "$_assets"
+				debug "$_assets"
+				debug "$lib" "$version" "$_assets" 
 				get_assets "$lib" "$version" "$_assets" 
 				ret=$?
 				if [[ "$ret" != "0" ]]; then
