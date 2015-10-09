@@ -77,6 +77,7 @@ search_without_version () {
 	else
     	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries\?search\=\"$srch\"\&fields\=version,assets" )
 	fi
+	echo $output
 	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
     local ret=$? 
     echo -e "$item" | jq '.'
