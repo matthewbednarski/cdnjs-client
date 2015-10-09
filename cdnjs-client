@@ -55,9 +55,9 @@ search_with_version () {
 	local srch="$1"
 	local vrs="$2"
 	if (( DO_VERBOSE )); then
-    	local output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" )
+    	local output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" | jq -r '.'  )
 	else
-    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" )
+    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" | jq -r '.'  )
 	fi
     local item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
     local ret=$? 
@@ -73,9 +73,9 @@ search_with_version () {
 search_without_version () {
 	local srch="$1"
 	if (( DO_VERBOSE )); then
-    	local output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" )
+    	local output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets"  | jq -r '.' )
 	else
-    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" )
+    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch&fields=version,assets" | jq -r '.'  )
 	fi
 	echo $output
 	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
@@ -158,7 +158,7 @@ function get_assets {
 
 search-cdnjs (){
 	# local results=$(wget -qO- https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description | jq -r '.results')
-	local results=$(curl -X GET "https://api.cdnjs.com/libraries\?search\=$@\&fields\=version,description" | jq -r '.results')
+	local results=$(curl -X GET "https://api.cdnjs.com/libraries?search=$@&fields=version,description" | jq -r '.results')
 	echo -n $results
 }
 
@@ -331,24 +331,22 @@ if (( $DO_ADD )); then
     if (( HAS_VERS )); then
 		val=$(search_with_version "$search" "$version")
 		tret=$?
-		echo $val
 		if [[ "$tret" == "0" ]]; then
 			info "Adding $search version: $RED $(echo "$val" | jq -r --arg key "$search" '.[ $key ].version')"
 		fi
-		val=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF" )
+		valfin=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF" )
 		fret=$?
     else
 		val=$(search_without_version "$search" )
 		tret=$?
-		echo $val
 		if [[ "$tret" == "0" ]]; then
 			info "Adding $search version: $RED $(echo "$val" | jq -r --arg key "$search" '.[ $key ].version')"
 		fi
-		val=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF")
+		valfin=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF")
 		fret=$?
     fi
     if [[ "$fret" == "0" ]]; then 
-		echo $val | jq '.' > $tmpconf
+		echo $valfin | jq '.' > $tmpconf
 		fret=$?
     	if [[ "$fret" == "0" ]]; then 
     		info "Successfully updated$GRN cdnjs$BLU config $GRN$CONF$BLU"
