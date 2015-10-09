@@ -169,6 +169,7 @@ sync-files () {
 	ret=0
 	loop=0
 	repos=$(jq -r '. as $in| keys[]' "$conf")
+	debug $repos
 	for repo in $repos; do
 		debug $repo
 		# cdn=$(jq -r --arg rep $repo '.[($rep)]' "$conf")
