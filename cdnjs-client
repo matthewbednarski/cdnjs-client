@@ -54,10 +54,11 @@ function error {
 search_with_version () {
 	local srch="$1"
 	local vrs="$2"
+	local output=
 	if (( DO_VERBOSE )); then
-    	local output=$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" | jq -r '.'  )
+		output=$(echo "$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
 	else
-    	local output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" | jq -r '.'  )
+		output=$(echo "$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
 	fi
     local item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
     local ret=$? 
@@ -75,10 +76,8 @@ search_without_version () {
 	local output=
 	if (( DO_VERBOSE )); then
 		output=$(echo "$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
-		echo "$output"
 	else
-    	output=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" | jq -r '.'  )
-		echo "$output"
+		output=$(echo "$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
 	fi
 	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
     local ret=$? 
