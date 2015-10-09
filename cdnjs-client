@@ -186,7 +186,7 @@ sync-files () {
 		green "Url: $BLU$url$NORMAL"
 		echo -e
 		for d in $keys; do
-			lib="$d"
+			lib=$d
 			debug "$(echo "$deps" | jq -r '. | keys')"
 			debug "$(echo "$deps" | jq --arg depk $lib '.[( $depk )] | $depk' )"
 			debug "$(echo "$deps" | jq --arg depk $lib '.[( $depk )] | .' )"
