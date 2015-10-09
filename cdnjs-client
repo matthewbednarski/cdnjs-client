@@ -186,12 +186,9 @@ sync-files () {
 		for d in $keys; do
 			lib=$d
 			debug "$lib"
-			debug "$deps"
 			part=$(echo "$deps" | jq --arg d "$d" '.[($d)]')
-			debug "$part"
 			version=$(echo "$part" | jq -r '.["version"]')
 			assets=$(echo "$part" | jq -r '.["files"]?')
-			debug "$assets"
 
 			create_assets_dir=false
 			assetsA=
