@@ -333,16 +333,16 @@ if (( $DO_ADD )); then
 		if [[ "$tret" == "0" ]]; then
 			info "Adding $search version: $RED $(echo "$val" | jq -r --arg key "$search" '.[( $key )].version')"
 		fi
+		debug "$val"
 		valfin=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF" )
 		fret=$?
     else
 		val=$(search_without_version "$search" )
 		tret=$?
 		if [[ "$tret" == "0" ]]; then
-			echo "$val"
 			info "Adding $search version: $RED$(echo "$val" | jq -r --arg key "$search" '.[( $key )].version')"
 		fi
-		echo "$val"
+		debug "$val"
 		valfin=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF")
 		fret=$?
     fi
