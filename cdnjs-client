@@ -189,6 +189,7 @@ sync-files () {
 			part=$(echo $deps | jq -r --arg d "$d" '.[($d)]')
 			version=$(echo $part | jq -r '.["version"]')
 			assets=$(echo $part | jq -r '.["files"]?')
+			debug "$assets"
 
 			create_assets_dir=false
 			assetsA=
@@ -206,6 +207,7 @@ sync-files () {
 				break
 			fi
 			for _assets in $assetsA; do
+				debug "$_assets"
 				get_assets "$lib" "$version" "$_assets" 
 				ret=$?
 				if [[ "$ret" != "0" ]]; then
