@@ -186,9 +186,10 @@ sync-files () {
 		green "Url: $BLU$url$NORMAL"
 		echo -e
 		for d in $keys; do
-			lib=$d
+			lib="$d"
 			debug "$lib"
-			part=$(echo "$deps" | jq --arg d "$d" '.[($d)]')
+			echo "$deps" | jq --arg depk "$lib" '.[( $depk )] | $depk'
+			part=$(echo "$deps" | jq --arg depk "$lib" '.[( $depk )]')
 			version=$(echo "$part" | jq -r '.["version"]')
 			assets=$(echo "$part" | jq -r '.["files"]?')
 
