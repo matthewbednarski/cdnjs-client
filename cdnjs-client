@@ -175,7 +175,9 @@ sync-files () {
 		url=$(echo "$cdn" | jq -r '.root')
 		dir=$(echo "$cdn" | jq -r '.["relative-location"]')
 		deps=$(echo "$cdn" | jq -r '.dependencies')
+		debug "$deps"
 		keys=$(echo "$deps" | jq -r '. as $in| keys[]')
+		debug "$keys"
 		if [[ "$loop" != "0" ]]; then
 			echo -e
 		fi
