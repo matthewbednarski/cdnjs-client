@@ -240,8 +240,8 @@ clean () {
 	local oifs=$IFS
 	local ret=
 	locations="$(echo "$locations" | tr '\r\n' '\n' | tr '\n' ' ')"
-	echo "$locations" | xargs -n1 | sort | uniq
 	locations="$(echo "$locations" | xargs -n1 | sort | uniq)"
+	debug "$locations"
 	IFS=$'\r\n'
 	for d in $locations; do
 		if [[ -d "$d" ]]; then
