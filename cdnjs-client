@@ -171,8 +171,8 @@ sync-files () {
 	repos=$(jq -r '. as $in| keys[]' $conf)
 	for repo in $repos; do
 		cdn=$(jq --arg repo "$repo" '.[($repo)]' $conf)
-		debug "Here"
 		url=$(echo "$cdn" | jq -r '.root')
+		debug "Here"
 		dir=$(echo "$cdn" | jq -r '.["relative-location"]')
 		deps=$(echo "$cdn" | jq -r '.dependencies')
 		keys=$(echo "$deps" | jq -r '. as $in| keys[]')
