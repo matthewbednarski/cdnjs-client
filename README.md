@@ -25,6 +25,8 @@ Usage: cdnjs-client [OPTIONS] [ARGS]:
 
 ## Configuration example:
 
+a file *.cdnjs* in the `pwd` or passed to the program through the `--conf [conf-file]` option.
+
 ```json
 {
     "cloudflare": {
