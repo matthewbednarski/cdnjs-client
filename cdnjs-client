@@ -187,6 +187,7 @@ sync-files () {
 			lib=$d
 			debug "$lib"
 			part=$(echo "$deps" | jq -r --arg d "$d" '.[($d)]')
+			debug "$part"
 			version=$(echo "$part" | jq -r '.["version"]')
 			assets=$(echo "$part" | jq -r '.["files"]?')
 			debug "$assets"
