@@ -189,8 +189,7 @@ sync-files () {
 			lib=$d
 			echo $lib
 			debug "$(echo "$deps" | jq --arg depk "lodash.js" '.[($depk)]' )"
-			debug "$(echo "$deps" | jq --arg depk "$lib" '.[($depk)]' )"
-			debug "$(echo "$deps" | jq -r --arg depk "$lib" '.[($depk)] | $depk' )"
+			debug "$(echo "$deps" | jq --arg depk $lib '.[($depk)]' )"
 			part=$(echo "$deps" | jq -r --arg depk "$lib" '.[($depk)]')
 			version=$(echo "$part" | jq -r '.["version"]')
 			assets=$(echo "$part" | jq -r '.["files"]?')
