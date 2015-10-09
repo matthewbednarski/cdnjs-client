@@ -240,7 +240,7 @@ clean () {
 	local oifs=$IFS
 	local ret=
 	locations="$(echo "$locations" | xargs -n1 | sort | uniq)"
-	IFS=$'\n'
+	IFS=$'\r\n'
 	for d in $locations; do
 		if [[ -d "$d" ]]; then
 			echo -e $BLU'Cleaning dir '$d'.'$NORMAL
