@@ -239,7 +239,7 @@ clean () {
 	local locations=$(jq -r -c '.. | select(has("relative-location"?))["relative-location"]' "$conf")
 	local oifs=$IFS
 	local ret=
-	echo "$locations" | tr '\r' ' ' 
+	locations="$(echo "$locations" | tr '\r\n' '\n' | tr '\n' ' ')"
 	echo "$locations" | xargs -n1 | sort | uniq
 	locations="$(echo "$locations" | xargs -n1 | sort | uniq)"
 	IFS=$'\r\n'
