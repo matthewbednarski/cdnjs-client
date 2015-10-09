@@ -190,8 +190,9 @@ sync-files () {
 			lib=$d
 			echo $lib
 			part=$(echo "$deps" | jq -r --arg depk "$(echo $lib)" '.[($depk)]')
-			version=$(echo "$part" | jq -r '.["version"]')
-			assets=$(echo "$part" | jq -r '.["files"]?')
+			echo "$part"
+			version="$(echo "$part" | jq -r '.["version"]')"
+			assets="$(echo "$part" | jq -r '.["files"]?')"
 
 			create_assets_dir=false
 			assetsA=
