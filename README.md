@@ -139,14 +139,14 @@ fi
 2. Then perform the following commands:
 
 ```sh
-$ if [ ! -d "~/bin" ]; then mkdir "~/bin"; fi
-$ cd ~/bin
-$ wget https://raw.githubusercontent.com/matthewbednarski/cdnjs-client/master/cdnjs
-$ chmod +x cdnjs
-$ wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win64.exe
-$ mv jq-win64.exe jq.exe
-$ chmod +x jq.exe
-$ ls -al
+if [ ! -d "~/bin" ]; then mkdir "~/bin"; fi
+cd ~/bin
+wget https://raw.githubusercontent.com/matthewbednarski/cdnjs-client/master/cdnjs
+chmod +x cdnjs
+wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win64.exe
+mv jq-win64.exe jq.exe
+chmod +x jq.exe
+ls -al
 ```
 
 ## Todo
