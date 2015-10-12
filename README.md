@@ -124,9 +124,10 @@ Since `cdnjs-client` is a `bash` script it will work in a bash environment such 
 
 Download the [latest version of cdnjs](https://raw.githubusercontent.com/matthewbednarski/cdnjs-client/master/cdnjs). Save it to a folder on you `$PATH` and make it executable.
 
-For example:
+### Windows Setup Example Steps:
 
-Edit `.bashrc`:
+1. Edit `.bashrc`:
+
 ```sh
 ...
 if [ -d "~/bin" ]; then
@@ -135,7 +136,8 @@ fi
 ...
 ```
 
-Then perform the following commands:
+2. Then perform the following commands:
+
 ```sh
 $ if [ ! -d "~/bin" ]; then mkdir "~/bin"; fi
 $ cd ~/bin
