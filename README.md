@@ -107,3 +107,47 @@ a file `.cdnjs` in the `pwd` or passed to the program through the `--conf [conf-
     }
 }
 ```
+## Setup
+
+`cdnjs-client` depends on `bash`, `jq`, `curl` and `mktemp`.  If those dependencies are met and and `cdnjs` is on your `$PATH` everything should be fine.
+
+
+## Windows Setup
+
+Since `cdnjs-client` is a `bash` script it will work in a bash environment such as [Git for Windows](https://git-for-windows.github.io/), however it requires `jq` and `mktemp` ( not found in `Git for Windows` pre version `1.9.5`).
+
+### Download Jq
+
+[Download the `jq` binary](https://stedolan.github.io/jq/download/) and rename it to `jq.exe`. Place it in a folder known to be on your `$PATH`, eg. if you are using `Git for Windows` version `2.6.1` you will have `%PROGRAMFILES%\Git\usr\bin` in which you can place the `jq.exe` binary.
+
+### Download Cdnjs-client
+
+Download the [latest version of cdnjs](https://raw.githubusercontent.com/matthewbednarski/cdnjs-client/master/cdnjs). Save it to a folder on you `$PATH` and make it executable.
+
+For example:
+
+Edit `.bashrc`:
+```sh
+...
+if [ -d "~/bin" ]; then
+  export PATH=$PATH:~/bin
+fi
+...
+```
+
+Then perform the following commands:
+```sh
+$ if [ ! -d "~/bin" ]; then mkdir "~/bin"; fi
+$ cd ~/bin
+$ wget https://raw.githubusercontent.com/matthewbednarski/cdnjs-client/master/cdnjs
+$ chmod +x cdnjs
+$ wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win64.exe
+$ mv jq-win64.exe jq.exe
+$ chmod +x jq.exe
+$ ls -al
+```
+
+## Todo
+
+ + add an `init` command
+ + allow partial `clean`'s and `sync`'s by section key (ie `cdnjs` or `gists` )
