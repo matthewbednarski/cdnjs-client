@@ -1,0 +1,366 @@
+#!/bin/bash
+
+##########
+#
+# parameters:
+#     conf: (required) points a cdnjs-client.json file; eg. [cdnjs-client.json](https://gist.github.com/matthewbednarski/30dd4b65221a8c8c67ee)
+#
+# requires: jq, curl
+#
+##########
+	
+unset DO_SEARCH DO_CLEAN DO_SYNC DO_HELP DO_ADD DO_VERBOSE HAS_CONF CONF
+while [[ $1 ]]; do
+	case "$1" in
+		--conf)                             if [[ -f "$2" ]]; then HAS_CONF=1; CONF="$2"; shift; fi;;
+		-v|--verbose|verbose)               DO_VERBOSE=1;;
+		--debug|debug)                      DO_VERBOSE=1;;
+		-f|--search|search|--find|find)     DO_SEARCH=1;;
+		-c|--clean|clean)                   DO_CLEAN=1;;
+		-s|--sync|sync)                     DO_SYNC=1;;
+		-a|--add|add|+)                     DO_ADD=1;;
+		-h|-\?|--help|help)                 DO_HELP=1;;
+		*)                                  if [[ "$ARGS" == "" ]]; then ARGS="$1"; else ARGS="$ARGS $1"; fi;
+	esac
+	shift
+done
+
+SWITCH="\e["
+NORMAL="${SWITCH}0m"
+YELLOW="${SWITCH}33m"
+RED="${SWITCH}31m"
+GRN="${SWITCH}32m"
+BLU="${SWITCH}34m"
+	
+function debug {
+	if (( DO_VERBOSE )); then
+		echo -e $YELLOW"$@"$NORMAL
+	fi
+}
+function warn {
+	echo -e $YELLOW"$@"$NORMAL
+}
+function info {
+	echo -e "$@"$NORMAL
+}
+function green {
+	echo -e $GRN"$@"$NORMAL
+}
+function error {
+	echo -e $RED"$@"$NORMAL
+}
+
+
+search_with_version () {
+	local srch="$1"
+	local vrs="$2"
+	local output=
+	if (( DO_VERBOSE )); then
+		output=$(echo "$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
+	else
+		output=$(echo "$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
+	fi
+    local item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
+    local ret=$? 
+    echo $item | jq '.'
+    return $ret
+}
+###
+# Select all results and put together an object composed of :
+#   name       .name
+#   version    .version
+#   files      .assets[1].files   -> selects files of latest version
+###
+search_without_version () {
+	local srch="$1"
+	local output=
+	if (( DO_VERBOSE )); then
+		output=$(echo "$(curl -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
+	else
+		output=$(echo "$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
+	fi
+	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
+    local ret=$? 
+    echo -e "$item" | jq '.'
+    return $ret
+}
+
+function get_resolved {
+	local save_dir_dest="$2"
+	local save_dir="$tmpdir/$2"
+	local save_file="$save_dir"/$1
+	local fetch_url="$3"
+	if [[ ! -d "$save_dir" ]]; then
+		mkdir -p "$save_dir"
+	fi
+	if [[ -f "$save_file" ]]; then
+		rm -Rf "$save_file"
+	fi
+	if (( DO_VERBOSE )); then
+		info "Fetching $RED$1$BLU to $GRN$save_dir"
+		info from $GRN$fetch_url
+		curl "$(echo $fetch_url)" -o "$save_file" 
+	else
+		info "Fetching $RED$1$BLU"
+		curl -s "$(echo $fetch_url)" -o "$save_file" 
+	fi
+	local ret=$?
+	if [[ "$ret" != "0" ]]; then
+		error "Could not download file $BLU$1" 
+	else
+		info "Success"
+	fi
+	return $ret
+}
+function get {
+	local name=$1
+	local version=$2 
+	local asset_dir=$(dirname $3)
+	local asset_file=$(basename $3)
+	local file="$3"
+	local save_dir=
+	local fetch_url=
+
+	if [[ "$asset_dir" != "." ]]; then
+		local save_dir=$dir/$name/$version/$asset_dir
+		local fetch_url=$url/$name/$version/$file
+	else
+		local save_dir=$dir/$name/$version
+		local fetch_url=$url/$name/$version/$file
+	fi
+
+	get_resolved "$asset_file" "$save_dir" "$fetch_url"
+	return $?
+}
+
+function processFiles {
+	local files="$1"
+	oifs=$IFS
+	IFS=$'\n'
+	local ret=1
+	for fileObj in $files; do
+		warn "Custom location"
+		local t_outpath=$(echo $fileObj | jq -r '.outpath')
+		local t_file=$(echo $fileObj | jq -r '.file')
+		local t_url=$(echo $fileObj | jq -r '.url')
+		get_resolved "$t_file" "$dir/$t_outpath" $t_url
+		ret=$?
+		if [[ "$ret" != "0" ]]; then
+			break
+		fi
+	done
+	IFS=$oifs
+	return $ret
+}
+function get_assets { get $@
+	return $?
+}
+
+search-cdnjs (){
+	local results=$(curl -X GET "https://api.cdnjs.com/libraries?search=$@\&fields=version,description" | jq -r '.results')
+	echo -n $results
+}
+
+sync-files () {
+	conf="$1"
+	shift
+	
+	tmpdir=$(mktemp -d -t)
+	ret=0
+	loop=0
+	repos=$(jq -r '. as $in| keys[]' "$conf" | sed :)
+	for repo in $repos; do
+		debug "$repo"
+		cdn=$(jq -r --arg rep "$repo" '.[($rep)]' "$conf")
+		url=$(echo "$cdn" | jq -r '.root')
+		dir=$(echo "$cdn" | jq -r '.["relative-location"]')
+		deps="$(echo "$cdn" | jq -r '.dependencies')"
+		keys=$(echo "$deps" | jq -r '. as $in| keys[]')
+		if [[ "$loop" != "0" ]]; then
+			echo -e
+		fi
+		((loop++))
+		green "Repo: $BLU$repo$NORMAL"
+		green "Url: $BLU$url$NORMAL"
+		echo -e
+		for d in $keys; do
+			lib=$d
+			part="$(echo "$deps" | jq -r --arg depk "$(echo $lib)" '.[($depk)]')"
+			version="$(echo "$part" | jq -r '.["version"]')"
+			assets="$(echo "$part" | jq -r '.["files"]?')"
+
+			create_assets_dir=false
+			assetsA=
+			if [[ "$assets" == "null" ]]; then
+				create_assets_dir=false
+			else
+				assetsAFiles="$(echo $assets | jq -r -c '.. | select(has("file")?)')"
+				assetsA="$(echo $assets | jq -r '.[] | select( type == "string") ')"
+			fi
+			if [[ "" != "$assetsAFiles" ]]; then
+				processFiles "$assetsAFiles"
+				ret=$?
+			fi
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+			for _assets in $assetsA; do
+				debug "$(echo $lib)" "$version" "$_assets" 
+				get_assets "$(echo $lib)" "$version" "$_assets" 
+				ret=$?
+				if [[ "$ret" != "0" ]]; then
+					break
+				fi
+			done
+			if [[ "$ret" != "0" ]]; then
+				break
+			fi
+		done
+		if [[ "$ret" != "0" ]]; then
+			break
+		fi
+	done
+	if [[ "$ret" != "0" ]]; then
+		error "Exiting with status code $ret"
+		/bin/rm -Rf $tmpdir
+	else
+		info "Copying from temp directory $tmpdir"
+		/bin/cp -Rf $tmpdir/* .
+		ret=$?
+		if [[ "$ret" == "0" ]]; then
+			info "Deleting temp directory $tmpdir"
+			/bin/rm -Rf $tmpdir
+		fi
+	fi
+	return $ret
+}
+clean () {
+	local conf="$1"
+	local locations=$(jq -r -c '.. | select(has("relative-location"?))["relative-location"]' "$conf")
+	local oifs=$IFS
+	local ret=
+	locations="$(echo "$locations" | tr '\r\n' '\n' | tr '\n' ' ')"
+	locations="$(echo "$locations" | xargs -n1 | sort | uniq)"
+	debug "$locations"
+	IFS=$'\r\n'
+	for d in $locations; do
+		if [[ -d "$d" ]]; then
+			echo -e $BLU'Cleaning dir '$d'.'$NORMAL
+			rm -Rf "$d"
+			ret=$?
+			if (( DO_VERBOSE )) && [[ "$ret" != "0" ]]; then
+				debug "Could not$GRN delete$NORMAL$BLU$d"
+			else
+				debug "Successfully$GRN deleted $NORMAL$BLU$d"
+			fi
+		else
+			echo -e $RED'Dir '$d' does not exist.'$NORMAL
+		fi
+	done
+	IFS=$oifs
+	return $ret
+}
+
+
+
+usage (){
+	echo -e "Usage: $(basename ${BASH_SOURCE[0]}) [OPTIONS] [ARGS]:"
+	echo -e
+	echo -e "    Options:"
+	echo -e "    --conf [CONFIG FILE]            use a custom config file"
+	echo -e
+	echo -e "    -f, --find, find [ARGS]         perform query on api.cdnjs.com"
+	echo -e "        --search, search [ARGS]     same as \"--search [ARGS]\""
+	echo -e
+	echo -e "    -c, --clean, clean [ARGS]       clean configured relative-location"
+	echo -e "    -s, --sync, sync [ARGS]         syncronize to configured relative-locations"
+	echo -e "    -a, + [LIB[+VERSION]] [GROUP]   add library with optional version to optional"
+	echo -e "        --add, add                   group"
+	echo -e
+	echo -e "    -v, --verbose, verbose          print debug/verbose output"
+	echo -e "        --debug, debug              same as \"--verbose\""
+	echo -e "    -h, -?, --help, help            print usage"
+}
+if (( ! HAS_CONF )); then
+	CONF='.cdnjs'
+	debug "using default config: $CONF"
+fi
+if (( DO_HELP )); then
+	usage
+	exit 0
+fi
+
+(( ! DO_SYNC && ! DO_SEARCH && ! DO_CLEAN  && ! DO_ADD )) && DO_SYNC=1
+(( DO_SYNC || DO_CLEAN )) && unset DO_SEARCH
+if (( DO_SYNC || DO_CLEAN )) && [[ ! -f "$CONF" ]]; then
+	error "A cdnjs-client configuration file is required!"
+	exit 1
+fi
+if [[ "$DO_CLEAN" == "1" ]] && [[ -f "$CONF" ]]; then
+	debug "CLEANING file $RED$CONF"
+	clean "$CONF"
+	fret=$?
+	if [[ "$fret" != "0" ]]; then
+		error "Cleaning was not successful"
+		exit $fret
+	else
+		debug "Successfully cleaned 'relative-location's"
+	fi
+fi
+if [[ "$DO_SYNC" == "1" ]] && [[ -f "$CONF" ]]; then
+	debug "SYNCING file $RED$CONF"
+	sync-files "$CONF"
+	exit $?
+fi
+(( DO_SEARCH  )) && unset DO_SYNC
+if (( $DO_SEARCH )); then
+	debug "SEARCHING for $RED$ARGS"
+	res=$(search-cdnjs "$ARGS")
+	fret=$?
+	echo $res | jq '.'
+	exit $fret
+fi
+
+if (( $DO_ADD )); then
+    param="$ARGS"
+    search="${param%+*}"
+    version="${param#*+}"
+    
+    unset HAS_VERS
+    if [[ "$param" != "$search" ]]; then
+    	HAS_VERS=1
+    fi
+	tmpconf=$(mktemp )
+    if (( HAS_VERS )); then
+		val=$(search_with_version "$search" "$version")
+		tret=$?
+		if [[ "$tret" == "0" ]]; then
+			info "Adding $search version: $RED $(echo "$val" | jq -r --arg key "$search" '.[( $key )].version')"
+		fi
+		debug "$val"
+		valfin=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF" )
+		fret=$?
+    else
+		val=$(search_without_version "$search" )
+		tret=$?
+		if [[ "$tret" == "0" ]]; then
+			info "Adding $search version: $RED$(echo "$val" | jq -r --arg key "$search" '.[( $key )].version')"
+		fi
+		debug "$val"
+		valfin=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF")
+		fret=$?
+    fi
+    if [[ "$fret" == "0" ]]; then 
+		echo $valfin | jq '.' > $tmpconf
+		fret=$?
+    	if [[ "$fret" == "0" ]]; then 
+    		info "Successfully updated$GRN cdnjs$BLU config $GRN$CONF$BLU"
+    		mv "$tmpconf" "$CONF"
+    		fret=$?
+    		if [[ "$fret" != "0" ]]; then 
+    			rm $tmpconf
+			fi
+		fi
+	fi
+	exit $fret
+fi
