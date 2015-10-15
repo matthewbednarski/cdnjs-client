@@ -1,0 +1,37 @@
+#!/bin/bash
+
+SWITCH="\e["
+NORMAL="${SWITCH}0m"
+YELLOW="${SWITCH}33m"
+RED="${SWITCH}31m"
+GREEN="${SWITCH}32m"
+BLUE="${SWITCH}34m"
+
+dir=$(dirname "${BASH_SOURCE[0]}")
+
+echo "hi"
+processed=$(jq  '
+[ . as $r  
+	| keys[] | . as $key 
+	| $r[$key] as $section
+	| $section.dependencies as $dep
+	| $dep 
+	| keys[] as $depkey 
+	| $dep[$depkey] as $library
+	| $library 
+	| $library.files as $files
+	| $library 
+	| (if has("version")  then
+		 $section["relative-location"] | (.) + "/" as $rl 
+		 | $rl + $depkey + "/" + $library.version + "/" as $rdl 
+		 | $rdl 
+	else
+		 $section["relative-location"] | (.) + "/" as $rl 
+		 | $rl + $depkey + "/" as $rdl 
+		 | $rdl 
+	 end ) as $rdl
+	| { path: $rdl, files: $files}  | .
+] 
+' "$1")
+
+echo "$processed" | jq '.[] as $all | $all | .files[] as $list | .path as $path | $list | . |  $path + strings , $path + objects.outpath + "/" + objects.file '
