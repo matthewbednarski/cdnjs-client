@@ -9,10 +9,11 @@
 #
 ##########
 	
-unset DO_SEARCH DO_CLEAN DO_SYNC DO_HELP DO_ADD DO_VERBOSE HAS_CONF CONF
+unset DO_INIT DO_SEARCH DO_CLEAN DO_SYNC DO_HELP DO_ADD DO_VERBOSE HAS_CONF CONF
 while [[ $1 ]]; do
 	case "$1" in
 		--conf)                             if [[ -f "$2" ]]; then HAS_CONF=1; CONF="$2"; shift; fi;;
+		--init|init)                        DO_INIT=1;;
 		-v|--verbose|verbose)               DO_VERBOSE=1;;
 		--debug|debug)                      DO_VERBOSE=1;;
 		-f|--search|search|--find|find)     DO_SEARCH=1;;
@@ -50,6 +51,18 @@ function error {
 	echo -e $RED"$@"$NORMAL
 }
 
+
+init_cdnjs () {
+	local conf="$1"
+	local contents=$(echo "{}" | jq '. as $r | $r.cdnjs={root:"https://cdnjs.cloudflare.com/ajax/libs", "relative-location" : "libs", dependencies: {} } |  .')
+    local ret=$? 
+    if [[ "$?" == "0" ]]; then
+    	info "Writing to $conf"
+		echo "$contents" > "$conf"
+		ret=$?
+	fi
+    return $ret
+}
 
 search_with_version () {
 	local srch="$1"
@@ -157,7 +170,7 @@ function get_assets { get $@
 }
 
 search-cdnjs (){
-	local results=$(curl -X GET "https://api.cdnjs.com/libraries?search=$@\&fields=version,description" | jq -r '.results')
+	local results=$(curl -X GET "https://api.cdnjs.com/libraries?search=$@\&fields=version,description,assets" | jq -r '.results')
 	echo -n $results
 }
 
@@ -267,6 +280,7 @@ usage (){
 	echo -e "Usage: $(basename ${BASH_SOURCE[0]}) [OPTIONS] [ARGS]:"
 	echo -e
 	echo -e "    Options:"
+	echo -e "    --init, init                    initialize a config file"
 	echo -e "    --conf [CONFIG FILE]            use a custom config file"
 	echo -e
 	echo -e "    -f, --find, find [ARGS]         perform query on api.cdnjs.com"
@@ -288,6 +302,12 @@ fi
 if (( DO_HELP )); then
 	usage
 	exit 0
+fi
+if (( DO_INIT )); then
+	debug "Initializing config file $RED$CONF"
+	init_cdnjs "$CONF"
+	fret=$?
+	exit $fret
 fi
 
 (( ! DO_SYNC && ! DO_SEARCH && ! DO_CLEAN  && ! DO_ADD )) && DO_SYNC=1
