@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 ##########
 #
@@ -56,9 +56,50 @@ function error {
 
 list_includes () {
 	local conf="$1"
-	p. as $r | keys[] | . as $key | $r[$key] | .["relative-location"] + "/" as $rl | $r[$key].dependencies | keys[] as $deps | $r[$key].dependencies[$deps].files[] 
-
-
+	local path_to_index="$2"
+	local processed=$(jq  '
+	[ . as $r  
+		| keys[] | . as $key 
+		| $r[$key] as $section
+		| $section.dependencies as $dep
+		| $dep 
+		| keys[] as $depkey 
+		| $dep[$depkey] as $library
+		| $library 
+		| $library.files as $files
+		| $library 
+		| (if has("version")  then
+			 $section["relative-location"] | (.) + "/" as $rl 
+			 | $rl + $depkey + "/" + $library.version + "/" as $rdl 
+			 | $rdl 
+		else
+			 $section["relative-location"] | (.) + "/" as $rl 
+			 | $rl + $depkey + "/" as $rdl 
+			 | $rdl 
+		 end ) as $rdl
+		| { path: $rdl, files: $files}  | .
+	] 
+	' "$conf")
+	tret=$?
+	if [[ "$tret" == "0" ]] && [[ "$processed" != "" ]]; then
+		debug "extracting list of \"link\"'s and \"script\"'s"
+		local list=$(echo "$processed" | jq '.[] as $all | $all | .files[] as $list | .path as $path | $list | . |  $path + strings , $path + objects.outpath + "/" + objects.file ')
+		if [[ "$path_to_index" != "" ]]; then
+			local css_files=$(echo "$list" | grep "\.css" | sed "s|$path_to_index||g")
+			local js_files=$(echo "$list" | grep "\.js" | sed "s|$path_to_index||g")
+		else
+			local css_files=$(echo "$list" | grep "\.css" )
+			local js_files=$(echo "$list" | grep "\.js" )
+		fi
+		for cssf in $css_files; do
+			echo "<link rel=\"stylesheet\" href=$cssf />"
+		done
+		for jsf in $js_files; do
+			echo "<script src=$jsf ></script>"
+		done
+		tret=0
+	fi
+	return $tret
 }
 
 init_cdnjs () {
@@ -289,20 +330,23 @@ usage (){
 	echo -e "Usage: $(basename ${BASH_SOURCE[0]}) [OPTIONS] [ARGS]:"
 	echo -e
 	echo -e "    Options:"
-	echo -e "    --init, init                    initialize a config file"
-	echo -e "    --conf [CONFIG FILE]            use a custom config file"
+	echo -e "    --init, init                     initialize a config file"
+	echo -e "    --conf [CONFIG FILE]             use a custom config file"
+	echo -e "    --index, index [p/to/exclude]    prints a list of link and script tags"
+	echo -e "    --html, html   [p/to/exclude]    same as \"--index\""
 	echo -e
-	echo -e "    -f, --find, find [ARGS]         perform query on api.cdnjs.com"
-	echo -e "        --search, search [ARGS]     same as \"--search [ARGS]\""
+	echo -e "    -f, --find, find [ARGS]          perform query on api.cdnjs.com"
+	echo -e "        --search, search [ARGS]      same as \"--search [ARGS]\""
 	echo -e
-	echo -e "    -c, --clean, clean [ARGS]       clean configured relative-location"
-	echo -e "    -s, --sync, sync [ARGS]         syncronize to configured relative-locations"
-	echo -e "    -a, + [LIB[+VERSION]] [GROUP]   add library with optional version to optional"
-	echo -e "        --add, add                   group"
+	echo -e "    -c, --clean, clean [ARGS]        clean configured relative-location"
+	echo -e "    -s, --sync, sync [ARGS]          syncronize to configured relative-locations"
+	echo -e "        --update, update [ARGS]      same as \"--sync [ARGS]\""
+	echo -e "    -a, + [LIB[+VERSION]] [GROUP]    add library with optional version to optional"
+	echo -e "        --add, add                    group"
 	echo -e
-	echo -e "    -v, --verbose, verbose          print debug/verbose output"
-	echo -e "        --debug, debug              same as \"--verbose\""
-	echo -e "    -h, -?, --help, help            print usage"
+	echo -e "    -v, --verbose, verbose           print debug/verbose output"
+	echo -e "        --debug, debug               same as \"--verbose\""
+	echo -e "    -h, -?, --help, help             print usage"
 }
 if (( ! HAS_CONF )); then
 	CONF='.cdnjs'
@@ -311,6 +355,12 @@ fi
 if (( DO_HELP )); then
 	usage
 	exit 0
+fi
+if (( DO_INDEX )); then
+	debug "Listing script and link tags from $RED$CONF"
+	list_includes "$CONF" "$ARGS"
+	fret=$?
+	exit $fret
 fi
 if (( DO_INIT )); then
 	debug "Initializing config file $RED$CONF"
