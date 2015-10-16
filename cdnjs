@@ -135,13 +135,17 @@ init_cdnjs () {
 	local contents=$(echo "{}" | jq '. as $r | $r.cdnjs={root:"https://cdnjs.cloudflare.com/ajax/libs", "relative-location" : "libs", dependencies: {} } |  .')
     local ret=$? 
     if [[ "$?" == "0" ]]; then
-    	info "Writing to $conf"
 		dir=$(dirname "${conf}")
     	if [[ ! -d "$dir" ]]; then
+    		debug "Creating directory $RED$dir"
     		mkdir -p "$dir"
+			ret=$?
+    		if [[ "$ret" == "0" ]]; then
+    			info "Writing to $conf"
+				echo "$contents" > "$conf"
+				ret=$?
+			fi
 		fi
-		echo "$contents" > "$conf"
-		ret=$?
 	fi
     return $ret
 }
