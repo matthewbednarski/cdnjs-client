@@ -122,7 +122,7 @@ There are a few *flags* for modifying output or functionality.
 
 Some are *general* and can be used with any command, such as `--conf` or `--debug`. 
 
-Others can be used only with *specific* commands, such as `--dev` or `--nodev`
+Others can be used only with *specific* commands, such as the `list` command's `--dev` and `--nodev` flags.
 
 ### Conf
 
