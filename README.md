@@ -5,7 +5,9 @@
 
 Initially it was a client for [cdnjs](https://cdnjs.com/) but it can handle any `GET`'able, publicly-available resources. 
 
-## Usage
+## Commands
+
+### Usage
 
 To print the script's usage:
 
@@ -41,15 +43,6 @@ Usage: cdnjs [OPTIONS] [ARGS]:
     -h, -?, --help, help             print usage
 ```
 
-## Commands
-
-### Help/Usage
-
-To print the script's usage:
-
-```sh
-$ cdnjs --help
-```
 
 ### Init
 
