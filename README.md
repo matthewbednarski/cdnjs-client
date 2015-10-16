@@ -43,6 +43,14 @@ Usage: cdnjs [OPTIONS] [ARGS]:
 
 ## Commands
 
+### Help/Usage
+
+To print the script's usage:
+
+```sh
+$ cdnjs --help
+```
+
 ### Init
 
 To initialize a cdnjs configuration file at the default location `$(pwd)/.cdnjs`:
@@ -107,14 +115,6 @@ $ cdnjs sync
 ```
 NB. the resources will be downloaded to a *tmp* directory and then moved to the configuration's `relative-location`'s.
 
-
-### Help/Usage
-
-To print the script's usage:
-
-```sh
-$ cdnjs --help
-```
 
 ## Flags
 
