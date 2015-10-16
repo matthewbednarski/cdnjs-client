@@ -175,86 +175,10 @@ $ cdnjs list nodev
 
 ## Configuration example:
 
-a file `.cdnjs` in the `pwd` or passed to the program through the `--conf [conf-file]` option.
+An example configuration file is found in this repository at [example/.cdnjs](https://raw.githubusercontent.com/matthewbednarski/cdnjs-client/master/example/.cdnjs).
 
-```json
-{
-    "cdnjs": {
-        "root": "https://cdnjs.cloudflare.com/ajax/libs",
-        "relative-location": "src/libs",
-        "dependencies": {
-            "font-awesome": {
-                "version": "4.4.0",
-                "files": [
-                    "css/font-awesome.min.css",
-                    "fonts/fontawesome-webfont.woff",
-                    "fonts/fontawesome-webfont.woff2",
-                    "fonts/fontawesome-webfont.eot",
-                    "fonts/fontawesome-webfont.ttf"
-                ]
-            },
-            "lodash.js": {
-                "version": "3.10.1",
-                "files": [
-                    "lodash.min.js"
-                ]
-            },
-            "moment.js": {
-                "version": "2.10.3",
-                "files": [
-                    "moment.min.js",
-                    "moment-with-locales.min.js"
-                ]
-            },
-            "jquery": {
-                "version": "2.1.4",
-                "files": [
-                    "jquery.min.js"
-                ]
-            },
-            "angular.js": {
-                "version": "1.3.18",
-                "files": [
-                    "angular.min.js"
-                ]
-            },
-            "bootstrap-datepicker": {
-                "version": "1.4.0",
-                "files": [
-                    "js/bootstrap-datepicker.min.js",
-                    "css/bootstrap-datepicker.min.css"
-                ]
-            },
-            "twitter-bootstrap": {
-                "version": "3.3.5",
-                "js": [
-                    "js/bootstrap.min.js",
-                    "js/bootstrap.js",
-                    "css/bootstrap.min.css",
-                    "css/bootstrap.css",
-                    "fonts/glyphicons-halflings-regular.woff",
-                    "fonts/glyphicons-halflings-regular.eot",
-                    "fonts/glyphicons-halflings-regular.ttf",
-                    "fonts/glyphicons-halflings-regular.woff2"
-                ]
-            }
-        }
-    },
-    "gists": {
-        "root": "https://gist.githubusercontent.com",
-        "relative-location": "src/libs",
-        "dependencies": {
-            "pouchdb-service": {
-                "files": [{
-                    "file": "pouchdb-service.js",
-                    "url": "https://gist.githubusercontent.com/matthewbednarski/5dd19e501409c386fa92/raw/7e69b3f34fc715f2c8101694ee54f69bdac98c51/pouchdb-service.js",
-                    "outpath": "custom"
-                }]
-            }
-        }
-    }
-}
-```
+A file `.cdnjs` in the `pwd` or passed to the program through the `--conf [conf-file]` option.
+
 ## Setup
 
 `cdnjs` depends on `bash`, `jq`, `curl` and `mktemp`.  If those dependencies are met and and `cdnjs` is on your `$PATH` everything should be fine.
