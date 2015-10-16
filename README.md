@@ -105,6 +105,7 @@ To download the resources indicated by the current configuration:
 ```sh
 $ cdnjs sync 
 ```
+NB. the resources will be downloaded to a *tmp* directory and then moved to the configuration's `relative-location`'s.
 
 
 ### Help/Usage
