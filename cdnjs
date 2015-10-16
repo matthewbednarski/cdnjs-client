@@ -16,7 +16,7 @@ unset DO_INIT DO_INDEX DO_SEARCH DO_CLEAN \
 
 while [[ $1 ]]; do
 	case "$1" in
-		--conf)                             if [[ -f "$2" ]]; then HAS_CONF=1; CONF="$2"; shift; fi;;
+		--conf)                             if [[ "$2" != "" ]]; then HAS_CONF=1; CONF="$2"; shift; fi;;
 		--init|init)                        DO_INIT=1;;
 		--index|index)                      DO_INDEX=1;;
 		--html|html)                        DO_INDEX=1;;
@@ -136,6 +136,10 @@ init_cdnjs () {
     local ret=$? 
     if [[ "$?" == "0" ]]; then
     	info "Writing to $conf"
+		dir=$(dirname "${conf}")
+    	if [[ ! -d "$dir" ]]; then
+    		mkdir -p "$dir"
+		fi
 		echo "$contents" > "$conf"
 		ret=$?
 	fi
@@ -363,9 +367,11 @@ usage (){
 	echo -e "    --index, index [p/to/exclude]    prints a list of link and script tags"
 	echo -e "    --html, html   [p/to/exclude]    same as \"--index\""
 	echo -e
+    echo -e "    --nodev, nodev                   excludes non '.min.*' files; a flag for \"--list\""
+    echo -e "    --dev, dev                       excludes '.min.*' files; a flag for \"--list\""
+	echo -e
 	echo -e "    -f, --find, find [ARGS]          perform query on api.cdnjs.com"
 	echo -e "        --search, search [ARGS]      same as \"--search [ARGS]\""
-	echo -e
 	echo -e "    -c, --clean, clean [ARGS]        clean configured relative-location"
 	echo -e "    -s, --sync, sync [ARGS]          syncronize to configured relative-locations"
 	echo -e "        --update, update [ARGS]      same as \"--sync [ARGS]\""
