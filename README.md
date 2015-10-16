@@ -69,7 +69,7 @@ NB. if the `path` of the file doesn't exist the script will attempt to create it
 
 Requires a parameter `"search string"`.
 
-To search for libraries `jquery`:
+To search for libraries containing `jquery`:
 
 ```sh
 $ cdnjs search jquery
@@ -77,7 +77,7 @@ $ cdnjs search jquery
 
 ### Add
 
-Requires a parameter `library` with an optional suffix `+version`.
+This command requires a parameter `library` with an optional suffix `+version`.
 
 To add the latest version of `jquery` to your configuration:
 
