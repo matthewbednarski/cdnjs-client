@@ -40,6 +40,7 @@ Usage: cdnjs [OPTIONS] [ARGS]:
 
     -v, --verbose, verbose           print debug/verbose output
         --debug, debug               same as "--verbose"
+        --nocolor, nocolor           don't echo in color, useful for logging stdout/stderr
     -h, -?, --help, help             print usage
 ```
 
@@ -113,7 +114,7 @@ NB. the resources will be downloaded to a *tmp* directory and then moved to the 
 
 There are a few *flags* for modifying output or functionality.
 
-Some are *general* and can be used with any command, such as `--conf` or `--debug`. 
+Some are *general* and can be used with any command, such as `--conf`, `--debug` or `--nocolor`.
 
 Others can be used only with *specific* commands, such as the `list` command's `--dev` and `--nodev` flags.
 
@@ -151,6 +152,14 @@ $ cdnjs clean --debug
 $ cdnjs clean verbose
 # or
 $ cdnjs clean debug
+```
+
+### No Color
+
+To not output *color* escape codes add the `nocolor` flag.  This is helpful when you want to log `stdout/stderr` to file.
+
+```sh
+$cdnjs sync nocolor
 ```
 
 
