@@ -8,6 +8,43 @@
 # requires: jq, curl #
 ##########
 	
+unset DO_MKDIR DO_MSGFMT HAS_MSGFMT
+#set -x
+dir=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+ret=$( which msgfmt 2>/dev/null; echo $?)
+ret=$?
+if [[ "$ret" == "0" ]]; then
+	HAS_MSGFMT=1
+fi
+if (( HAS_MSGFMT )) ; then
+    if [[ "$TEXTDOMAINDIR" == "" ]]; then
+        export TEXTDOMAINDIR=$dir/locale
+        if [[ ! -d "$TEXTDOMAINDIR" ]]; then
+			if [[ -f "$dir/i18n/$(basename ${BASH_SOURCE[0]}).$LANGUAGE.po" ]]; then
+                DO_MKDIR=1
+			fi
+        elif [[ ! -d "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES" ]]; then
+			if [[ -f "$dir/i18n/$(basename ${BASH_SOURCE[0]}).$LANGUAGE.po" ]]; then
+                DO_MKDIR=1
+		    fi
+		fi
+        if [[ ! -f "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" ]]; then
+			if [[ -f "$dir/i18n/$(basename ${BASH_SOURCE[0]}).$LANGUAGE.po" ]]; then
+                DO_MSGFMT=1
+	        fi
+        fi
+    fi
+fi
+export TEXTDOMAIN=cdnjs
+if (( HAS_MSGFMT )) ; then
+    if (( DO_MKDIR )); then
+        mkdir -p "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES"
+    fi
+    if (( DO_MSGFMT )); then
+        msgfmt -o "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" "$dir/i18n/$(basename ${BASH_SOURCE[0]}).$LANGUAGE.po"
+    fi
+fi
+
 unset DO_INIT DO_INDEX DO_SEARCH DO_CLEAN \
 	  DO_SYNC DO_HELP DO_ADD DO_VERBOSE \
 	  HAS_CONF CONF \

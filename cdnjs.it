@@ -1,36 +1,6 @@
 #!/bin/bash
 
-unset DO_MKDIR DO_MSGFMT HAS_MSGFMT
-#set -x
-dir=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
-ret=$( which msgfmt 2>/dev/null; echo $?)
-if [[ "$ret" == "0" ]]; then
-	HAS_MSGFMT=1
-fi
-if (( HAS_MSGFMT )) ; then
-    if [[ "$TEXTDOMAINDIR" == "" ]]; then
-        export TEXTDOMAINDIR=$dir/locale
-        if [[ ! -d "$TEXTDOMAINDIR" ]]; then
-            DO_MKDIR=1
-            DO_MSGFMT=1
-        elif [[ ! -d "$TEXTDOMAINDIR/it/LC_MESSAGES" ]]; then
-            DO_MKDIR=1
-            DO_MSGFMT=1
-        elif [[ ! -f "$TEXTDOMAINDIR/it/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" ]]; then
-            DO_MSGFMT=1
-        fi
-    fi
-fi
-export TEXTDOMAIN="cdnjs.it"
 export LANGUAGE=it
 
-if (( HAS_MSGFMT )) ; then
-    if (( DO_MKDIR )); then
-        mkdir -p "$TEXTDOMAINDIR/it/LC_MESSAGES"
-    fi
-    if (( DO_MSGFMT )); then
-        msgfmt -o "$TEXTDOMAINDIR/it/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" "$dir/$(basename ${BASH_SOURCE[0]}).po"
-    fi
-fi
-
+dir=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 $dir/cdnjs $@
