@@ -3,10 +3,13 @@
 unset DO_MKDIR DO_MSGFMT HAS_MSGFMT
 #set -x
 dir=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
-HAS_MSGFMT=$( which msgfmt 2>/dev/null ; if [[ "$?" == "0" ]]; then echo 1; fi)
+ret=$( which msgfmt 2>/dev/null; echo $?)
+if [[ "$ret" != "0" ]]; then
+	HAS_MSGFMT=1
+fi
 if (( HAS_MSGFMT )) ; then
-    if [[ "$textdomaindir" == "" ]]; then
-        export textdomaindir=$dir/locale
+    if [[ "$TEXTDOMAINDIR" == "" ]]; then
+        export TEXTDOMAINDIR=$dir/locale
         if [[ ! -d "$TEXTDOMAINDIR" ]]; then
             DO_MKDIR=1
             DO_MSGFMT=1
@@ -21,7 +24,6 @@ fi
 export TEXTDOMAIN="cdnjs.it"
 export LANGUAGE=it
 
-HAS_MSGFMT=$( which msgfmt 2>/dev/null ; if [[ "$?" == "0" ]]; then echo 1; fi)
 if (( HAS_MSGFMT )) ; then
     if (( DO_MKDIR )); then
         mkdir -p "$TEXTDOMAINDIR/it/LC_MESSAGES"

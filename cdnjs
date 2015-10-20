@@ -115,6 +115,7 @@ list_includes () {
 	tret=$?
 	if [[ "$tret" == "0" ]] && [[ "$processed" != "" ]]; then
 		debug "    extracting list of link and script tags"
+		# echo $processed | jq .
 		local list=$(echo "$processed" | jq '.[] as $all | $all | .files[] as $list | .path as $path | $list | . |  $path + strings , $path + objects.outpath + "/" + objects.file ')
 		if (( IS_DEV )); then
 			if (( NO_COLOR )); then

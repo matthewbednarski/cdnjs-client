@@ -47,7 +47,7 @@
             },
             "twitter-bootstrap": {
                 "version": "3.3.5",
-                "js": [
+                "files": [
                     "js/bootstrap.min.js",
                     "js/bootstrap.js",
                     "css/bootstrap.min.css",
