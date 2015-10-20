@@ -4,7 +4,7 @@ unset DO_MKDIR DO_MSGFMT HAS_MSGFMT
 #set -x
 dir=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 ret=$( which msgfmt 2>/dev/null; echo $?)
-if [[ "$ret" != "0" ]]; then
+if [[ "$ret" == "0" ]]; then
 	HAS_MSGFMT=1
 fi
 if (( HAS_MSGFMT )) ; then
