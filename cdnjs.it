@@ -1,0 +1,31 @@
+#!/bin/bash
+
+unset DO_MKDIR DO_MSGFMT
+#set -x
+dir=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+if [[ "$TEXTDOMAINDIR" == "" ]]; then
+	export TEXTDOMAINDIR=$dir/locale
+	if [[ ! -d "$TEXTDOMAINDIR" ]]; then
+		DO_MKDIR=1
+		DO_MSGFMT=1
+	elif [[ ! -d "$TEXTDOMAINDIR/it/LC_MESSAGES" ]]; then
+		DO_MKDIR=1
+		DO_MSGFMT=1
+	elif [[ ! -f "$TEXTDOMAINDIR/it/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" ]]; then
+		DO_MSGFMT=1
+	fi
+fi
+if [[ "$TEXTDOMAIN" == "" ]]; then
+	export TEXTDOMAIN="cdnjs.it"
+fi
+export LANGUAGE=it
+
+if (( DO_MKDIR )); then
+	mkdir -p "$TEXTDOMAINDIR/it/LC_MESSAGES"
+fi
+if (( DO_MSGFMT )); then
+	msgfmt -o "$TEXTDOMAINDIR/it/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" "$dir/$(basename ${BASH_SOURCE[0]}).po"
+fi
+
+$dir/cdnjs $@
+

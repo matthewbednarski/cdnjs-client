@@ -1,0 +1,216 @@
+msgid  "Writing to $conf"
+msgstr  "Salvando sul file $conf"
+
+msgid  "Fetching $res to $save_dir"
+msgstr  "Salvando $res in $save_dir"
+
+msgid  "Fetching $RED$1$NORMAL to $RED$save_dir"
+msgstr  "Salvando $RED$1$NORMAL in $RED$save_dir"
+
+msgid  "from $fetch_url"
+msgstr  "da $fetch_url"
+
+msgid  "from $GRN$fetch_url"
+msgstr  "da $GRN$fetch_url"
+
+msgid  "Fetching $res"
+msgstr  "Salvando $res"
+
+msgid  "Fetching $RED$res"
+msgstr  "Salvando $RED$res"
+
+msgid  "Success"
+msgstr  "Riuscito"
+# msgstr  "Andato a buon fine"
+
+msgid  "Copying from temp directory $tmpdir"
+msgstr  "Spostando i file dalla cartella temp $tmpdir"
+
+msgid  "Deleting temp directory $tmpdir"
+msgstr  "Cancellando la cartella $tmpdir"
+
+msgid  "Cleaning dir '$d'."
+msgstr  "Pulendo la cartella '$d'."
+
+msgid  "Usage: $(basename ${BASH_SOURCE[0]}) [OPTIONS] [ARGS]:"
+msgstr  "Usage: $(basename ${BASH_SOURCE[0]}) [OPTIONS] [ARGS]:"
+
+msgid  "    Options:"
+msgstr  "    Opzioni:"
+
+msgid  "    --init, init                     initialize a config file"
+msgstr  "    --init, init                     initializza un file di configurazione"
+
+msgid  "    --conf [CONFIG FILE]             use a custom config file"
+msgstr  "    --conf [CONFIG FILE]             indicare una configurazione custom"
+
+msgid  "    --index, index [p/to/exclude]    prints a list of link and script tags"
+msgstr  "    --index, index [p/to/exclude]    stampare una lista di tag link/script"
+
+msgid  "    --html, html   [p/to/exclude]    same as \"--index\""
+msgstr  "    --html, html   [p/to/exclude]    come \"--index\""
+
+msgid  "    --nodev, nodev                   excludes non '.min.*' files; a flag for \"--list\""
+msgstr  "    --nodev, nodev                   esclude i file non '.min.*'; un flag per l'opzione \"--list\""
+
+msgid  "    --dev, dev                       excludes '.min.*' files; a flag for \"--list\""
+msgstr  "    --dev, dev                       exclude i file '.min.*'; un flag per l'opzione \"--list\""
+
+msgid  "    -f, --find, find [ARGS]          perform query on api.cdnjs.com"
+msgstr  "    -f, --find, find [ARGS]          fai un query verso api.cdnjs.com"
+
+msgid  "        --search, search [ARGS]      same as \"--search [ARGS]\""
+msgstr  "        --search, search [ARGS]      come \"--search [ARGS]\""
+
+msgid  "    -c, --clean, clean [ARGS]        clean configured relative-location"
+msgstr  "    -c, --clean, clean [ARGS]        eliminare le cartelle indicate con i relative-location"
+
+msgid  "    -s, --sync, sync [ARGS]          synchronize to configured relative-locations"
+msgstr  "    -s, --sync, sync [ARGS]          sincronizzare le relative-locations"
+
+msgid  "        --update, update [ARGS]      same as \"--sync [ARGS]\""
+msgstr  "        --update, update [ARGS]      come \"--sync [ARGS]\""
+
+msgid  "    -a, + [LIB[+VERSION]] [GROUP]    add library with optional version to optional group"
+msgstr  "    -a, + [LIB[+VERSION]] [GROUP]    aggiungere la libreria indicando, opzionalmente, la versione e la gruppo"
+
+msgid  "        --add, add                   "
+msgstr  "        --add, add                  "
+
+msgid  "    -v, --verbose, verbose           print debug/verbose output"
+msgstr  "    -v, --verbose, verbose           stampare l'output debug/verbose"
+
+msgid  "        --debug, debug               same as \"--verbose\""
+msgstr  "        --debug, debug               come \"--verbose\""
+
+msgid  "        --nocolor, nocolor           do not output in color, useful for logging stdout/stderr"
+msgstr  "        --nocolor, nocolor           non usare gli escape di colori, può servire se si deve salvare l'output di stdout/stderr"
+
+msgid  "    -h, -?, --help, help             print usage"
+msgstr  "    -h, -?, --help, help             stampare usage"
+msgid  "Adding $search version: $VERS"
+msgstr  "Aggiungendo $search versione: $VERS"
+
+msgid  "Adding $search version: $RED$VERS"
+msgstr  "Aggiungendo $search versione: $RED$VERS"
+
+msgid  "Successfully updated cdnjs config $CONF"
+msgstr  "Modificato la configurazione cdnjs $CONF"
+
+msgid  "Successfully updated$GRN cdnjs$BLU config $GRN$CONF$BLU"
+msgstr  "Modificato la configurazione$GRN cdnjs$BLU $GRN$CONF$BLU"
+
+msgid "    extracting list of link and script tags"
+msgstr "    estraendo la lista di tag link e script"
+
+msgid "Excluding min's from list!"
+msgstr "Escludendo i file *.min.* dalla lista!"
+
+msgid "Excluding$RED min's$YELLOW from list!"
+msgstr "Escludendo i file $RED*.min.*$YELLOW dalla lista!"
+
+msgid "Listing min's only!"
+msgstr "Elencando solo i file *.min.*!"
+
+msgid "Listing$RED min's$YELLOW only!"
+msgstr "Elencando solo i file $RED*.min.*$YELLOW!"
+
+msgid "Listing all available js's and css's!"
+msgstr "Elencando tutti i file *.js e *.css!"
+
+msgid "    Use --dev or --nodev flags for managing minified output"
+msgstr "    Utilizzare il flag --dev or --nodev per gestire i file *.min.*"
+
+msgid "Listing$RED all$YELLOW available$RED js's$YELLOW and$RED css's$YELLOW!"
+msgstr "Elencando$RED tutti$YELLOW i file$RED *.js$YELLOW e$RED *.css$YELLOW!"
+
+msgid "    Use $RED--dev$YELLOW or $RED--nodev$YELLOW flags for managing minified output"
+msgstr "    Utilizzare il flag$RED --dev$YELLOW or$RED --nodev$YELLOW per gestire i file *.min.*"
+
+msgid "Creating directory $dir"
+msgstr "Creando la cartella $dir"
+
+msgid "Could not delete $d"
+msgstr "La cartella $d non è stata eliminata"
+
+msgid "Successfully deleted $d"
+msgstr "La cartella $d è stata eliminata"
+
+msgid "using default config: $CONF"
+msgstr "usando la configurazione: $CONF"
+
+msgid "Listing script and link tags from $CONF"
+msgstr "Elencando i tag script e link trovati in $CONF"
+
+msgid "Listing script and link tags from $RED$CONF"
+msgstr "Elencando i tag script e link trovati in $RED$CONF"
+
+msgid "Initializing config file $CONF"
+msgstr "Inizializzando la configurazione di cdnjs nel file $CONF"
+
+msgid "Initializing config file $RED$CONF"
+msgstr "Inizializzando la configurazione di cdnjs nel file $RED$CONF"
+
+msgid "CLEANING file $CONF"
+msgstr "PULENDO i percorsi gestiti da $CONF"
+
+msgid "CLEANING file $RED$CONF"
+msgstr "PULENDO i percorsi gestiti da $RED$CONF"
+
+msgid "Successfully cleaned 'relative-location's"
+msgstr "I percorsi indicati con i 'relative-location' sono stati eliminati"
+
+msgid "SYNCING file $CONF"
+msgstr "SYNCRONIZZANDO la configurazione $CONF"
+
+msgid "SYNCING file $RED$CONF"
+msgstr "SYNCRONIZZANDO la configurazione $RED$CONF"
+
+msgid "SEARCHING for $ARGS"
+msgstr "CERCANDO per $ARGS"
+
+msgid "SEARCHING for $RED$ARGS"
+msgstr "CERCANDO per $RED$ARGS"
+
+msgid "val=$val"
+msgstr "val=$val"
+
+msgid "Could not download file $1"
+msgstr "Il file $1 non è stato scaricato"
+
+msgid "Exiting with status code $ret"
+msgstr "Uscendo con status $ret"
+
+msgid "Dir '$d' does not exist."
+msgstr "La cartella '$d' non esiste."
+
+msgid "A cdnjs-client configuration file is required!"
+msgstr "Una configurazione cdnjs-client è obbligatorio!"
+
+msgid "Cleaning was not successful"
+msgstr "Pulizia non riuscita"
+
+msgid "no assets found for the library: $search, version: $version"
+msgstr "nessun asset trovato per: $search, versione: $version"
+
+msgid "no assets found for the library: $GRN$search$RED, version: $GRN$version"
+msgstr "nessun asset trovato per: $GRN$search$RED, versione: $GRN$version"
+
+msgid "no assets found for the library: $GRN$search"
+msgstr "nessun asset trovato per: $GRN$search"
+
+msgid "Custom location"
+msgstr "Percorso custom"
+
+msgid "Repo: $repo"
+msgstr "Repo: $repo"
+
+msgid "Url: $url"
+msgstr "Url: $url"
+
+msgid "Repo: $BLU$repo$NORMAL"
+msgstr "Repo: $BLU$repo$NORMAL"
+
+msgid "Url: $BLU$url$NORMAL"
+msgstr "Url: $BLU$url$NORMAL"
+
