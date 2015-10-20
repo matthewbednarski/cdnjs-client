@@ -5,8 +5,7 @@
 # parameters:
 #     conf: (required) points a cdnjs-client.json file; eg. [cdnjs-client.json](https://gist.github.com/matthewbednarski/30dd4b65221a8c8c67ee)
 #
-# requires: jq, curl
-#
+# requires: jq, curl #
 ##########
 	
 unset DO_INIT DO_INDEX DO_SEARCH DO_CLEAN \
@@ -46,40 +45,44 @@ BLU="${SWITCH}34m"
 	
 function debug {
 	if (( DO_VERBOSE )); then
+		local text="$(gettext "$@")"
+		local ret=$(echo $text | grep "gettext:" ; echo $?)
+		if [[ "$ret" != "0" ]];then
+			text="$@"
+		fi
 		if (( NO_COLOR )); then
-			echo -e $@
+			echo -e "$text"
 		else
-			echo -e $YELLOW"$@"$NORMAL
+			echo -e "$YELLOW"$text"$NORMAL"
 		fi
 	fi
 }
 function warn {
 	if (( NO_COLOR )); then
-		echo -e $@
+		echo -e "$(gettext "$@")"
 	else
-		echo -e $YELLOW"$@"$NORMAL
+		echo -e "$YELLOW$(gettext "$@")$NORMAL"
 	fi
 }
 function info {
 	if (( NO_COLOR )); then
-		echo -e $@
+		echo -e "$(gettext "$@")"
 	else
-		echo -e "$@"$NORMAL
+		echo -e "$(gettext "$@")$NORMAL"
 	fi
 }
 function green {
 	if (( NO_COLOR )); then
-		echo -e $@
+		echo -e "$(gettext "$@")"
 	else
-		echo -e $GRN"$@"$NORMAL
+		echo -e "$GRN$(gettext "$@")$NORMAL"
 	fi
 }
 function error {
-	# echo -e $@ >&2
 	if (( NO_COLOR )); then
-		echo -e $@ >&2
+		echo -e "$(gettext "$@")" >&2
 	else
-		echo -e $RED"$@"$NORMAL >&2
+		echo -e "$RED$(gettext "$@")$NORMAL" >&2
 	fi
 }
 
@@ -111,7 +114,7 @@ list_includes () {
 	' "$conf")
 	tret=$?
 	if [[ "$tret" == "0" ]] && [[ "$processed" != "" ]]; then
-		debug "    extracting list of \"link\"'s and \"script\"'s"
+		debug "    extracting list of link and script tags"
 		local list=$(echo "$processed" | jq '.[] as $all | $all | .files[] as $list | .path as $path | $list | . |  $path + strings , $path + objects.outpath + "/" + objects.file ')
 		if (( IS_DEV )); then
 			if (( NO_COLOR )); then
@@ -236,12 +239,16 @@ function get_resolved {
 			info "Fetching $1 to $save_dir"
 			info from $fetch_url
 		else
-			info "Fetching $1 to $save_dir"
+			info "Fetching $RED$1$NORMAL to $RED$save_dir"
 			info from $GRN$fetch_url
 		fi
 		curl "$(echo $fetch_url)" -o "$save_file" 
 	else
-		info "Fetching $1$"
+		if (( NO_COLOR )); then
+			info "Fetching $1"
+		else
+			info "Fetching $RED$1"
+		fi
 		curl -s "$(echo $fetch_url)" -o "$save_file" 
 	fi
 	local ret=$?
@@ -409,29 +416,29 @@ clean () {
 
 
 usage (){
-	echo -e "Usage: $(basename ${BASH_SOURCE[0]}) [OPTIONS] [ARGS]:"
+	info "Usage: $(basename ${BASH_SOURCE[0]}) [OPTIONS] [ARGS]:"
 	echo -e
-	echo -e "    Options:"
-	echo -e "    --init, init                     initialize a config file"
-	echo -e "    --conf [CONFIG FILE]             use a custom config file"
-	echo -e "    --index, index [p/to/exclude]    prints a list of link and script tags"
-	echo -e "    --html, html   [p/to/exclude]    same as \"--index\""
+	info "    Options:"
+	info "    --init, init                     initialize a config file"
+	info "    --conf [CONFIG FILE]             use a custom config file"
+	info "    --index, index [p/to/exclude]    prints a list of link and script tags"
+	info "    --html, html   [p/to/exclude]    same as \"--index\""
 	echo -e
-    echo -e "    --nodev, nodev                   excludes non '.min.*' files; a flag for \"--list\""
-    echo -e "    --dev, dev                       excludes '.min.*' files; a flag for \"--list\""
+    info "    --nodev, nodev                   excludes non '.min.*' files; a flag for \"--list\""
+    info "    --dev, dev                       excludes '.min.*' files; a flag for \"--list\""
 	echo -e
-	echo -e "    -f, --find, find [ARGS]          perform query on api.cdnjs.com"
-	echo -e "        --search, search [ARGS]      same as \"--search [ARGS]\""
-	echo -e "    -c, --clean, clean [ARGS]        clean configured relative-location"
-	echo -e "    -s, --sync, sync [ARGS]          syncronize to configured relative-locations"
-	echo -e "        --update, update [ARGS]      same as \"--sync [ARGS]\""
-	echo -e "    -a, + [LIB[+VERSION]] [GROUP]    add library with optional version to optional"
-	echo -e "        --add, add                    group"
+	info "    -f, --find, find [ARGS]          perform query on api.cdnjs.com"
+	info "        --search, search [ARGS]      same as \"--search [ARGS]\""
+	info "    -c, --clean, clean [ARGS]        clean configured relative-location"
+	info "    -s, --sync, sync [ARGS]          syncronize to configured relative-locations"
+	info "        --update, update [ARGS]      same as \"--sync [ARGS]\""
+	info "    -a, + [LIB[+VERSION]] [GROUP]    add library with optional version to optional group"
+	info "        --add, add                   "
 	echo -e
-	echo -e "    -v, --verbose, verbose           print debug/verbose output"
-	echo -e "        --debug, debug               same as \"--verbose\""
-	echo -e "        --nocolor, nocolor           do not output in color, useful for logging stdout/stderr"
-	echo -e "    -h, -?, --help, help             print usage"
+	info "    -v, --verbose, verbose           print debug/verbose output"
+	info "        --debug, debug               same as \"--verbose\""
+	info "        --nocolor, nocolor           do not output in color, useful for logging stdout/stderr"
+	info "    -h, -?, --help, help             print usage"
 }
 if (( ! HAS_CONF )); then
 	CONF='.cdnjs'
@@ -520,9 +527,9 @@ if (( $DO_ADD )); then
 		tret=$?
 		if [[ "$val" == "" ]]; then
 			if (( NO_COLOR )); then
-				error "no assets found for library: $search, version: $version"
+				error "no assets found for the library: $search, version: $version"
 			else
-				error "no assets found for library: $GRN$search$RED, version: $GRN$version"
+				error "no assets found for the library: $GRN$search$RED, version: $GRN$version"
 			fi
 			fret=1
 		else
@@ -541,7 +548,7 @@ if (( $DO_ADD )); then
 		val=$(search_without_version "$search" )
 		tret=$?
 		if [[ "$val" == "" ]]; then
-			error "no assets found for library: $GRN$search"
+			error "no assets found for the library: $GRN$search"
 			fret=1
 		else
 			if [[ "$tret" == "0" ]]; then
