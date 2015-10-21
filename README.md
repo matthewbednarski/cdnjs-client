@@ -37,6 +37,9 @@ Usage: cdnjs [OPTIONS] [ARGS]:
         --update, update [ARGS]      same as "--sync [ARGS]"
     -a, + [LIB[+VERSION]] [GROUP]    add library with optional version to optional
         --add, add                    group
+    -i, --install, install [LIB]     same as "add" plus "sync"
+    -d, --delete, delete [LIB]       removes library from configuration
+    --remove, remove [LIB]           same as "delete"
 
     -v, --verbose, verbose           print debug/verbose output
         --debug, debug               same as "--verbose"
@@ -109,6 +112,29 @@ $ cdnjs sync
 ```
 NB. the resources will be downloaded to a *tmp* directory and then moved to the configuration's `relative-location`'s.
 
+### Install
+
+Performs the `--add` and `--sync` commands:
+
+```sh
+$ cdnjs install jquery
+# 
+# same as
+# 
+$ cdnjs sync add jquery
+```
+
+### Delete/Remove
+
+Removes the indicated library from the configuration and filesystem:
+
+```sh
+$ cdnjs remove jquery
+#
+# or
+# 
+$ cdnjs --delete jquery
+```
 
 ## Flags
 
