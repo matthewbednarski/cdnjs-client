@@ -47,6 +47,7 @@ fi
 
 unset DO_INIT DO_INDEX DO_SEARCH DO_CLEAN \
 	  DO_SYNC DO_HELP DO_ADD DO_VERBOSE \
+	  DO_REMOVE \
 	  HAS_CONF CONF \
 	  NO_COLOR \
 	  IS_DEV NO_DEV
@@ -66,6 +67,9 @@ while [[ $1 ]]; do
 		-s|--sync|sync|update)              DO_SYNC=1;;
 		--update|update)                    DO_SYNC=1;;
 		-a|--add|add|+)                     DO_ADD=1;;
+		-i|--install|install)               DO_ADD=1; DO_SYNC=1;;
+		-d|--delete|delete)                 DO_REMOVE=1;;
+		--remove|remove)                    DO_REMOVE=1;;
 		--nocolor|nocolor)                  NO_COLOR=1;;
 		-h|-\?|--help|help)                 DO_HELP=1;;
 		*)                                  if [[ "$ARGS" == "" ]]; then ARGS="$1"; else ARGS="$ARGS $1"; fi;
@@ -435,7 +439,7 @@ clean () {
 	IFS=$'\r\n'
 	for d in $locations; do
 		if [[ -d "$d" ]]; then
-			info 'Cleaning dir '$d'.'
+			info 'Cleaning directory '$d'.'
 			rm -Rf "$d"
 			ret=$?
 			if (( DO_VERBOSE )) && [[ "$ret" != "0" ]]; then
@@ -472,6 +476,9 @@ usage (){
 	info "        --update, update [ARGS]      same as \"--sync [ARGS]\""
 	info "    -a, + [LIB[+VERSION]] [GROUP]    add library with optional version to optional group"
 	info "        --add, add                   "
+	info "    -i, --install, install [LIB]     same as \"add\" plus \"sync\""
+	info "    -d, --delete, delete [LIB]       removes library from configuaration"
+	info "    --remove, remove [LIB]           same as \"delete\""
 	echo -e
 	info "    -v, --verbose, verbose           print debug/verbose output"
 	info "        --debug, debug               same as \"--verbose\""
@@ -507,13 +514,13 @@ if (( DO_INIT )); then
 	exit $fret
 fi
 
-(( ! DO_SYNC && ! DO_SEARCH && ! DO_CLEAN  && ! DO_ADD )) && DO_SYNC=1
+(( ! DO_SYNC && ! DO_SEARCH && ! DO_CLEAN  && ! DO_ADD && ! DO_REMOVE  )) && DO_SYNC=1
 (( DO_SYNC || DO_CLEAN )) && unset DO_SEARCH
 if (( DO_SYNC || DO_CLEAN )) && [[ ! -f "$CONF" ]]; then
 	error "A cdnjs-client configuration file is required!"
 	exit 1
 fi
-if [[ "$DO_CLEAN" == "1" ]] && [[ -f "$CONF" ]]; then
+if (( DO_CLEAN )) && [[ -f "$CONF" ]]; then
 	if (( NO_COLOR )); then
 		debug "CLEANING file $CONF"
 	else
@@ -528,17 +535,8 @@ if [[ "$DO_CLEAN" == "1" ]] && [[ -f "$CONF" ]]; then
 		debug "Successfully cleaned 'relative-location's"
 	fi
 fi
-if [[ "$DO_SYNC" == "1" ]] && [[ -f "$CONF" ]]; then
-	if (( NO_COLOR )); then
-		debug "SYNCING file $CONF"
-	else
-		debug "SYNCING file $RED$CONF"
-	fi
-	sync-files "$CONF"
-	exit $?
-fi
 (( DO_SEARCH  )) && unset DO_SYNC
-if (( $DO_SEARCH )); then
+if (( DO_SEARCH )); then
 	if (( NO_COLOR )); then
 		debug "SEARCHING for $ARGS"
 	else
@@ -550,10 +548,11 @@ if (( $DO_SEARCH )); then
 	exit $fret
 fi
 
-if (( $DO_ADD )); then
+if (( DO_ADD )); then
     param="$ARGS"
     search="${param%+*}"
     version="${param#*+}"
+	debug "ADDING library $search"
     
     unset HAS_VERS
     if [[ "$param" != "$search" ]]; then
@@ -617,5 +616,81 @@ if (( $DO_ADD )); then
 			fi
 		fi
 	fi
-	exit $fret
+	if [[ "$fret" != "0" ]]; then
+		exit $fret
+	fi
 fi
+is_danger_path (){
+	local params="$@"
+	echo "$params" | grep -E "\*|^\/"
+	local ret=$?
+	if [[ "$ret" != "0" ]]; then
+		return 0
+	fi
+	return 1
+}
+if (( DO_REMOVE )) && [[ -f "$CONF" ]]; then
+    param="$ARGS"
+    lib="${param%+*}"
+	debug "REMOVING library $lib"
+	if [[ "$lib" == "" ]]; then
+		if (( NO_COLOR )); then
+			error "a library found as a dependency in $CONF is required"
+		else
+			error "a library found as a dependency in $GRN$CONF$RED is required"
+		fi
+		fret=1
+	else
+        prev=$(jq  --arg lib "$lib" '. as $root | $root | keys[] as $keys | $keys | . as $key | $key | select($root[$key].dependencies[$lib])?| $root[$key].dependencies[$lib] | .' "$CONF")
+        if [[ "$prev" == "" ]]; then
+			error "the library '$lib' is not a dependency in $CONF"
+        	fret=1
+		else
+        	valfin=$(jq  --arg lib "$lib" '. as $root | $root | keys[] as $keys | $keys | . as $key | $key | select($root[$key].dependencies[$lib])? | . as $key | $root |  del( $root[$key].dependencies[$lib] )' "$CONF")
+        	fret=$?
+		fi
+	fi
+    if [[ "$fret" == "0" ]]; then 
+    	# library exists so remove any synced files if found
+		lib_fs_path=$(jq -r --arg lib "$lib" '. as $root | $root | keys[] as $keys | $keys | . as $key | $key | select($root[$key].dependencies[$lib])? | . as $key | $root | $root[$key]["relative-location"] + "/" +$lib' "$CONF" )
+		if [[ -d "$lib_fs_path" ]]; then
+			is_danger_path "$lib_fs_path"
+			if [[ "$?" == "0" ]]; then
+				info Cleaning directory "$lib_fs_path"
+				/bin/rm -Rf "$lib_fs_path"
+				fret=$?
+			else
+				warn "the path to delete, $lib_fs_path, contains potentially dangerous characters"
+			fi
+		fi
+        if [[ "$fret" == "0" ]]; then 
+			tmpconf=$(mktemp )
+    		echo $valfin | jq '.' > $tmpconf
+    		fret=$?
+        	if [[ "$fret" == "0" ]]; then 
+    			if (( NO_COLOR )); then
+        			info "Successfully updated cdnjs config $CONF"
+        		else
+        			info "Successfully updated$GRN cdnjs$BLU config $GRN$CONF$BLU"
+    			fi
+        		mv "$tmpconf" "$CONF"
+        		fret=$?
+        		if [[ "$fret" != "0" ]]; then 
+        			rm $tmpconf
+    			fi
+    		fi
+    	fi
+	fi
+	if [[ "$fret" != "0" ]]; then
+		exit $fret
+	fi
+fi
+if (( DO_SYNC )) && [[ -f "$CONF" ]]; then
+	if (( NO_COLOR )); then
+		debug "SYNCING file $CONF"
+	else
+		debug "SYNCING file $RED$CONF"
+	fi
+	sync-files "$CONF"
+fi
+exit $?

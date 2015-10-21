@@ -29,7 +29,7 @@ msgstr  "Spostando i file dalla cartella temp $tmpdir"
 msgid  "Deleting temp directory $tmpdir"
 msgstr  "Cancellando la cartella $tmpdir"
 
-msgid  "Cleaning dir '$d'."
+msgid  "Cleaning directory '$d'."
 msgstr  "Pulendo la cartella '$d'."
 
 msgid  "Usage: $(basename ${BASH_SOURCE[0]}) [OPTIONS] [ARGS]:"
@@ -172,6 +172,12 @@ msgstr "CERCANDO per $ARGS"
 msgid "SEARCHING for $RED$ARGS"
 msgstr "CERCANDO per $RED$ARGS"
 
+msgid "ADDING library $search"
+msgstr "AGGIUNGENDO la libraria $search"
+
+msgid "REMOVING library $lib"
+msgstr "CANCELLANDO la libraria $lib"
+
 msgid "val=$val"
 msgstr "val=$val"
 
@@ -214,3 +220,11 @@ msgstr "Repo: $BLU$repo$NORMAL"
 msgid "Url: $BLU$url$NORMAL"
 msgstr "Url: $BLU$url$NORMAL"
 
+msgid "a library found as a dependency in $CONF is required"
+msgid "un parametro indicando una libreria elencato nel file $CONF è obbligatorio"
+
+msgid "a library found as a dependency in $GRN$CONF$RED is required"
+msgid "un parametro indicando una libreria elencato nel file $GRN$CONF$RED è obbligatorio"
+
+msgid "the path to delete, $path, contains potentially dangerous characters"
+msgstr "cancellare il percorso $path è potenzialmente dannoso"
