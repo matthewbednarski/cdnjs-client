@@ -214,6 +214,7 @@ list_includes () {
 init_cdnjs () {
 	local conf="$1"
 	local contents=$(echo "{}" | jq '. as $r | $r.cdnjs={root:"https://cdnjs.cloudflare.com/ajax/libs", "relative-location" : "libs", dependencies: {} } |  .')
+	debug "$(echo $contents | jq '.')"
     local ret=$? 
     if [[ "$?" == "0" ]]; then
 		dir=$(dirname "${conf}")
@@ -226,6 +227,10 @@ init_cdnjs () {
 				echo "$contents" > "$conf"
 				ret=$?
 			fi
+		else
+        	info "Writing to $conf"
+	    	echo "$contents" > "$conf"
+	    	ret=$?
 		fi
 	fi
     return $ret
