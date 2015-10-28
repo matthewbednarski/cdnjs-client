@@ -254,7 +254,7 @@ search_with_version () {
 # Select all results and put together an object composed of :
 #   name       .name
 #   version    .version
-#   files      .assets[1].files   -> selects files of latest version
+#   files      .assets[0].files   -> selects files of latest version
 ###
 search_without_version () {
 	local srch="$1"
@@ -264,7 +264,7 @@ search_without_version () {
 	else
 		output=$(echo "$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
 	fi
-	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[1].files } }')
+	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[0].files } }')
     local ret=$? 
     echo -e "$item" | jq '.'
     return $ret
