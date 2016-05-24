@@ -468,14 +468,26 @@ sync-files () {
     			assetsA="$(echo $assets | jq -r '.[] | select( type == "string") ')"
     		fi
     		if [[ "" != "$assetsAFiles" ]]; then
-    			processFiles "$assetsAFiles"
-    			ret=$?
-    		fi
-    		if [[ "$ret" != "0" ]]; then
-    			break
+	            local files="$assetsAFiles"
+	            local oifs=$IFS
+	            IFS=$'\n'
+	            for fileObj in $files; do
+	            	local t_outpath=$(echo $fileObj | jq -r '.outpath')
+	            	local t_file=$(echo $fileObj | jq -r '.file')
+	            	local t_url=$(echo $fileObj | jq -r '.url')
+				    if (( DO_VERBOSE )); then
+						fetching+="        $RED$t_file $YELLOW(Custom Location)$NORMAL\n"
+			        fi
+				    local tmp_get_assets=$(mktemp)
+				    output+=( $tmp_get_assets )
+	            	get_resolved "$t_file" "$dir/$t_outpath" $t_url > $tmp_get_assets 2>&1 &
+    			    pids+="$! "
+				    c=$(( c + 1 ))
+	            done
+	            IFS=$oifs
     		fi
     		for _assets in $assetsA; do
-    			debug "$(echo $lib)" "$version" "$_assets" 
+    			debug "$(echo $lib) $version $_assets" 
 				local tmp_get_assets=$(mktemp)
 				output+=( $tmp_get_assets )
 				if (( DO_VERBOSE )); then
@@ -494,13 +506,15 @@ sync-files () {
     for pid in $pids; do
     	if wait $pid; then
 			f=$(( f + 1 ))
-    		debug "Process with pid: " $pid " finished successfully"
+    		debug "Process with pid: $pid finished successfully $f/$c"
     	else
     		ret=$?
     		error "Process with pid: $pid finished in error"
     		break
     	fi
-    	progress-bar $f $c
+		if (( ! DO_VERBOSE )); then
+    	    progress-bar $f $c
+	    fi
     done
 	echo -e
 	if (( DO_VERBOSE )); then
@@ -514,11 +528,15 @@ sync-files () {
     	error "Exiting with status code $ret"
     	/bin/rm -Rf $tmpdir
     else
-    	info "Copying from temp directory $tmpdir"
+		if (( DO_VERBOSE )); then
+            info "Copying from temp directory $tmpdir"
+	    fi
     	/bin/cp -Rf $tmpdir/* .
     	ret=$?
     	if [[ "$ret" == "0" ]]; then
-    		info "Deleting temp directory $tmpdir"
+		    if (( DO_VERBOSE )); then
+    		    info "Deleting temp directory $tmpdir"
+    		fi
     		/bin/rm -Rf $tmpdir
     	fi
     fi
