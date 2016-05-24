@@ -5,9 +5,8 @@
 # parameters:
 #     conf: (required) points a cdnjs-client.json file; eg. [cdnjs-client.json](https://gist.github.com/matthewbednarski/30dd4b65221a8c8c67ee)
 #
-# requires: jq, curl #
-##########
-	
+# requires: jq, curl # ##########
+
 unset DO_MKDIR DO_MSGFMT HAS_MSGFMT
 #set -x
 dir=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
@@ -17,44 +16,42 @@ if [[ "$ret" == "0" ]]; then
 	HAS_MSGFMT=1
 fi
 if (( HAS_MSGFMT )) ; then
-    if [[ "$TEXTDOMAINDIR" == "" ]]; then
-        export TEXTDOMAINDIR=$dir/locale
-        if [[ ! -d "$TEXTDOMAINDIR" ]]; then
+	if [[ "$TEXTDOMAINDIR" == "" ]]; then
+		export TEXTDOMAINDIR=$dir/locale
+		if [[ ! -d "$TEXTDOMAINDIR" ]]; then
 			if [[ -f "$dir/i18n/$(basename ${BASH_SOURCE[0]}).$LANGUAGE.po" ]]; then
-                DO_MKDIR=1
+				DO_MKDIR=1
 			fi
-        elif [[ ! -d "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES" ]]; then
+		elif [[ ! -d "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES" ]]; then
 			if [[ -f "$dir/i18n/$(basename ${BASH_SOURCE[0]}).$LANGUAGE.po" ]]; then
-                DO_MKDIR=1
-		    fi
+				DO_MKDIR=1
+			fi
 		fi
-        if [[ ! -f "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" ]]; then
+		if [[ ! -f "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" ]]; then
 			if [[ -f "$dir/i18n/$(basename ${BASH_SOURCE[0]}).$LANGUAGE.po" ]]; then
-                DO_MSGFMT=1
-	        fi
-        fi
-    fi
+				DO_MSGFMT=1
+			fi
+		fi
+	fi
 fi
 export TEXTDOMAIN=cdnjs
 if (( HAS_MSGFMT )) ; then
-    if (( DO_MKDIR )); then
-        mkdir -p "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES"
-    fi
-    if (( DO_MSGFMT )); then
-        msgfmt -o "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" "$dir/i18n/$(basename ${BASH_SOURCE[0]}).$LANGUAGE.po"
-    fi
+	if (( DO_MKDIR )); then
+		mkdir -p "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES"
+	fi
+	if (( DO_MSGFMT )); then
+		msgfmt -o "$TEXTDOMAINDIR/$LANGUAGE/LC_MESSAGES/$(basename ${BASH_SOURCE[0]}).mo" "$dir/i18n/$(basename ${BASH_SOURCE[0]}).$LANGUAGE.po"
+	fi
 fi
 
 unset DO_INIT DO_INDEX DO_SEARCH DO_CLEAN \
-	  DO_SYNC DO_HELP DO_ADD DO_VERBOSE \
-	  DO_REMOVE \
-	  HAS_CONF CONF \
-	  NO_COLOR \
-	  IS_DEV NO_DEV
+	DO_SYNC DO_HELP DO_ADD DO_VERBOSE \
+	DO_REMOVE \
+	HAS_CONF CONF \
+	NO_COLOR \
+	IS_DEV NO_DEV
 
-while [[ $1 ]]; do
-	case "$1" in
-		--conf)                             if [[ "$2" != "" ]]; then HAS_CONF=1; CONF="$2"; shift; fi;;
+while [[ $1 ]]; do case "$1" in --conf)                             if [[ "$2" != "" ]]; then HAS_CONF=1; CONF="$2"; shift; fi;;
 		--init|init)                        DO_INIT=1;;
 		--index|index)                      DO_INDEX=1;;
 		--html|html)                        DO_INDEX=1;;
@@ -83,7 +80,7 @@ YELLOW="${SWITCH}33m"
 RED="${SWITCH}31m"
 GRN="${SWITCH}32m"
 BLU="${SWITCH}34m"
-	
+
 function debug {
 	if (( DO_VERBOSE )); then
 		local text="$(gettext "$@")"
@@ -132,108 +129,108 @@ list_includes () {
 	local path_to_index="$2"
 	local processed=$(jq  '
 	[ . as $r  
-		| keys[] | . as $key 
-		| $r[$key] as $section
-		| $section.dependencies as $dep
-		| $dep 
-		| keys[] as $depkey 
-		| $dep[$depkey] as $library
-		| $library 
-		| $library.files as $files
-		| $library 
-		| (if has("version")  then
-			 $section["relative-location"] | (.) + "/" as $rl 
-			 | $rl + $depkey + "/" + $library.version + "/" as $rdl 
-			 | $rdl 
+	| keys[] | . as $key 
+	| $r[$key] as $section
+	| $section.dependencies as $dep
+	| $dep 
+	| keys[] as $depkey 
+	| $dep[$depkey] as $library
+	| $library 
+	| $library.files as $files
+	| $library 
+	| (if has("version")  then
+	$section["relative-location"] | (.) + "/" as $rl 
+	| $rl + $depkey + "/" + $library.version + "/" as $rdl 
+	| $rdl 
+else
+	$section["relative-location"] | (.) + "/" as $rl 
+	| $rl + $depkey + "/" as $rdl 
+	| $rdl 
+end ) as $rdl
+| { path: $rdl, files: $files}  | .
+] 
+' "$conf")
+tret=$?
+if [[ "$tret" == "0" ]] && [[ "$processed" != "" ]]; then
+	debug "    extracting list of link and script tags"
+	# echo $processed | jq .
+	local list=$(echo "$processed" | jq '.[] as $all | $all | .files[] as $list | .path as $path | $list | . |  $path + strings , $path + objects.outpath + "/" + objects.file ')
+	if (( IS_DEV )); then
+		if (( NO_COLOR )); then
+			debug "Excluding min's from list!"
 		else
-			 $section["relative-location"] | (.) + "/" as $rl 
-			 | $rl + $depkey + "/" as $rdl 
-			 | $rdl 
-		 end ) as $rdl
-		| { path: $rdl, files: $files}  | .
-	] 
-	' "$conf")
-	tret=$?
-	if [[ "$tret" == "0" ]] && [[ "$processed" != "" ]]; then
-		debug "    extracting list of link and script tags"
-		# echo $processed | jq .
-		local list=$(echo "$processed" | jq '.[] as $all | $all | .files[] as $list | .path as $path | $list | . |  $path + strings , $path + objects.outpath + "/" + objects.file ')
-		if (( IS_DEV )); then
-			if (( NO_COLOR )); then
-				debug "Excluding min's from list!"
-			else
-				debug "Excluding$RED min's$YELLOW from list!"
-			fi
-			if [[ "$path_to_index" != "" ]]; then
-				local css_files=$(echo "$list" | grep -v "\.min\." | grep "\.css" | sed "s|$path_to_index||g")
-				local js_files=$(echo "$list" | grep -v "\.min\." | grep "\.js" | sed "s|$path_to_index||g")
-			else
-				local css_files=$(echo "$list" | grep -v "\.min\." | grep "\.css" )
-				local js_files=$(echo "$list" | grep -v "\.min\." | grep "\.js" )
-			fi
-		elif (( NO_DEV )); then
-			if (( NO_COLOR )); then
-				debug "Listing min's only!"
-			else
-				debug "Listing$RED min's$YELLOW only!"
-			fi
-			if [[ "$path_to_index" != "" ]]; then
-				local css_files=$(echo "$list" | grep "\.min\." | grep "\.css" | sed "s|$path_to_index||g")
-				local js_files=$(echo "$list" | grep "\.min\." | grep "\.js" | sed "s|$path_to_index||g")
-			else
-				local css_files=$(echo "$list" | grep "\.min\." | grep "\.css" )
-				local js_files=$(echo "$list" | grep "\.min\." | grep "\.js" )
-			fi
-		else
-			if (( NO_COLOR )); then
-				debug "Listing all available js's and css's!"
-				debug "    Use --dev or --nodev flags for managing minified output"
-			else
-				debug "Listing$RED all$YELLOW available$RED js's$YELLOW and$RED css's$YELLOW!"
-				debug "    Use $RED--dev$YELLOW or $RED--nodev$YELLOW flags for managing minified output"
-			fi
-			if [[ "$path_to_index" != "" ]]; then
-				local css_files=$(echo "$list" | grep "\.css" | sed "s|$path_to_index||g")
-				local js_files=$(echo "$list" | grep "\.js" | sed "s|$path_to_index||g")
-			else
-				local css_files=$(echo "$list" | grep "\.css" )
-				local js_files=$(echo "$list" | grep "\.js" )
-			fi
+			debug "Excluding$RED min's$YELLOW from list!"
 		fi
-		for cssf in $css_files; do
-			echo "<link rel=\"stylesheet\" href=$cssf />"
-		done
-		for jsf in $js_files; do
-			echo "<script src=$jsf ></script>"
-		done
-		tret=0
+		if [[ "$path_to_index" != "" ]]; then
+			local css_files=$(echo "$list" | grep -v "\.min\." | grep "\.css" | sed "s|$path_to_index||g")
+			local js_files=$(echo "$list" | grep -v "\.min\." | grep "\.js" | sed "s|$path_to_index||g")
+		else
+			local css_files=$(echo "$list" | grep -v "\.min\." | grep "\.css" )
+			local js_files=$(echo "$list" | grep -v "\.min\." | grep "\.js" )
+		fi
+	elif (( NO_DEV )); then
+		if (( NO_COLOR )); then
+			debug "Listing min's only!"
+		else
+			debug "Listing$RED min's$YELLOW only!"
+		fi
+		if [[ "$path_to_index" != "" ]]; then
+			local css_files=$(echo "$list" | grep "\.min\." | grep "\.css" | sed "s|$path_to_index||g")
+			local js_files=$(echo "$list" | grep "\.min\." | grep "\.js" | sed "s|$path_to_index||g")
+		else
+			local css_files=$(echo "$list" | grep "\.min\." | grep "\.css" )
+			local js_files=$(echo "$list" | grep "\.min\." | grep "\.js" )
+		fi
+	else
+		if (( NO_COLOR )); then
+			debug "Listing all available js's and css's!"
+			debug "    Use --dev or --nodev flags for managing minified output"
+		else
+			debug "Listing$RED all$YELLOW available$RED js's$YELLOW and$RED css's$YELLOW!"
+			debug "    Use $RED--dev$YELLOW or $RED--nodev$YELLOW flags for managing minified output"
+		fi
+		if [[ "$path_to_index" != "" ]]; then
+			local css_files=$(echo "$list" | grep "\.css" | sed "s|$path_to_index||g")
+			local js_files=$(echo "$list" | grep "\.js" | sed "s|$path_to_index||g")
+		else
+			local css_files=$(echo "$list" | grep "\.css" )
+			local js_files=$(echo "$list" | grep "\.js" )
+		fi
 	fi
-	return $tret
+	for cssf in $css_files; do
+		echo "<link rel=\"stylesheet\" href=$cssf />"
+	done
+	for jsf in $js_files; do
+		echo "<script src=$jsf ></script>"
+	done
+	tret=0
+fi
+return $tret
 }
 
 init_cdnjs () {
 	local conf="$1"
 	local contents=$(echo "{}" | jq '. as $r | $r.cdnjs={root:"https://cdnjs.cloudflare.com/ajax/libs", "relative-location" : "libs", dependencies: {} } |  .')
 	debug "$(echo $contents | jq '.')"
-    local ret=$? 
-    if [[ "$?" == "0" ]]; then
+	local ret=$? 
+	if [[ "$?" == "0" ]]; then
 		dir=$(dirname "${conf}")
-    	if [[ ! -d "$dir" ]]; then
-    		debug "Creating directory $dir"
-    		mkdir -p "$dir"
+		if [[ ! -d "$dir" ]]; then
+			debug "Creating directory $dir"
+			mkdir -p "$dir"
 			ret=$?
-    		if [[ "$ret" == "0" ]]; then
-    			info "Writing to $conf"
+			if [[ "$ret" == "0" ]]; then
+				info "Writing to $conf"
 				echo "$contents" > "$conf"
 				ret=$?
 			fi
 		else
-        	info "Writing to $conf"
-	    	echo "$contents" > "$conf"
-	    	ret=$?
+			info "Writing to $conf"
+			echo "$contents" > "$conf"
+			ret=$?
 		fi
 	fi
-    return $ret
+	return $ret
 }
 
 search_with_version () {
@@ -245,10 +242,10 @@ search_with_version () {
 	else
 		output=$(echo "$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
 	fi
-    local item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
-    local ret=$? 
-    echo $item | jq '.'
-    return $ret
+	local item=$(echo "$output" | jq  --arg name "$srch" --arg vers "$vrs" '.results[] | select( .name == $name ) |   { (.name) : {  version: $vers, files :  .assets[] | select( .version == $vers ) | .files  } }')
+	local ret=$? 
+	echo $item | jq '.'
+	return $ret
 }
 ###
 # Select all results and put together an object composed of :
@@ -265,9 +262,9 @@ search_without_version () {
 		output=$(echo "$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$srch\&fields=version,assets" )" | jq -r '.' )
 	fi
 	local item=$(echo "$output" | jq  --arg name "$srch" '.results[] | select( .name == $name) | { (.name) : { version, files :  .assets[0].files } }')
-    local ret=$? 
-    echo -e "$item" | jq '.'
-    return $ret
+	local ret=$? 
+	echo -e "$item" | jq '.'
+	return $ret
 }
 
 function get_resolved {
@@ -346,92 +343,118 @@ function processFiles {
 	IFS=$oifs
 	return $ret
 }
-function get_assets { get $@
+function get_assets { 
+	get $@
 	return $?
 }
 
 search-cdnjs (){
-	local results=$(curl -X GET "https://api.cdnjs.com/libraries?search=$@\&fields=version,description,assets" | jq -r '.results')
-	echo -n $results
+    local results=$(curl -X GET "https://api.cdnjs.com/libraries?search=$@\&fields=version,description,assets" | jq -r '.results')
+    echo -n $results
 }
 
 sync-files () {
-	conf="$1"
-	shift
-	
-	tmpdir=$(mktemp -d -t)
-	ret=0
-	loop=0
-	repos=$(jq -r '. as $in| keys[]' "$conf" | sed :)
-	for repo in $repos; do
-		debug "$repo"
-		cdn=$(jq -r --arg rep "$repo" '.[($rep)]' "$conf")
-		url=$(echo "$cdn" | jq -r '.root')
-		dir=$(echo "$cdn" | jq -r '.["relative-location"]')
-		deps="$(echo "$cdn" | jq -r '.dependencies')"
-		keys=$(echo "$deps" | jq -r '. as $in| keys[]')
-		if [[ "$loop" != "0" ]]; then
-			echo -e
-		fi
-		((loop++))
-		if (( NO_COLOR )); then
-			green "Repo: $repo"
-			green "Url: $url"
-		else
-			green "Repo: $BLU$repo$NORMAL"
-			green "Url: $BLU$url$NORMAL"
-		fi
-		echo -e
-		for d in $keys; do
-			lib=$d
-			part="$(echo "$deps" | jq -r --arg depk "$(echo $lib)" '.[($depk)]')"
-			version="$(echo "$part" | jq -r '.["version"]')"
-			assets="$(echo "$part" | jq -r '.["files"]?')"
-
-			create_assets_dir=false
-			assetsA=
-			if [[ "$assets" == "null" ]]; then
-				create_assets_dir=false
-			else
-				assetsAFiles="$(echo $assets | jq -r -c '.. | select(has("file")?)')"
-				assetsA="$(echo $assets | jq -r '.[] | select( type == "string") ')"
-			fi
-			if [[ "" != "$assetsAFiles" ]]; then
-				processFiles "$assetsAFiles"
-				ret=$?
-			fi
-			if [[ "$ret" != "0" ]]; then
-				break
-			fi
-			for _assets in $assetsA; do
-				debug "$(echo $lib)" "$version" "$_assets" 
-				get_assets "$(echo $lib)" "$version" "$_assets" 
-				ret=$?
-				if [[ "$ret" != "0" ]]; then
-					break
-				fi
-			done
-			if [[ "$ret" != "0" ]]; then
-				break
-			fi
-		done
-		if [[ "$ret" != "0" ]]; then
-			break
-		fi
-	done
-	if [[ "$ret" != "0" ]]; then
-		error "Exiting with status code $ret"
-		/bin/rm -Rf $tmpdir
-	else
-		info "Copying from temp directory $tmpdir"
-		/bin/cp -Rf $tmpdir/* .
-		ret=$?
-		if [[ "$ret" == "0" ]]; then
-			info "Deleting temp directory $tmpdir"
-			/bin/rm -Rf $tmpdir
-		fi
-	fi
-	return $ret
+    conf="$1"
+    shift
+    
+    declare -a output
+    local pids=''
+    local tmpdir=$(mktemp -d -t)
+    local ret=0
+    local loop=0
+    local repos=$(jq -r '. as $in| keys[]' "$conf" | sed :)
+    for repo in $repos; do
+    	debug "$repo"
+    	local cdn=$(jq -r --arg rep "$repo" '.[($rep)]' "$conf")
+    	local url=$(echo "$cdn" | jq -r '.root')
+    	local dir=$(echo "$cdn" | jq -r '.["relative-location"]')
+    	local deps="$(echo "$cdn" | jq -r '.dependencies')"
+    	local keys=$(echo "$deps" | jq -r '. as $in| keys[]')
+    	if [[ "$loop" != "0" ]]; then
+    		echo -e
+    	fi
+    	((loop++))
+    	if (( NO_COLOR )); then
+    		green "Repo: $repo"
+    		green "Url: $url"
+    	else
+    		green "Repo: $BLU$repo$NORMAL"
+    		green "Url: $BLU$url$NORMAL"
+    	fi
+    	echo -e
+    	for d in $keys; do
+    		local lib=$d
+    		local part="$(echo "$deps" | jq -r --arg depk "$(echo $lib)" '.[($depk)]')"
+    		local version="$(echo "$part" | jq -r '.["version"]')"
+    		local assets="$(echo "$part" | jq -r '.["files"]?')"
+    
+    		local create_assets_dir=false
+    		local assetsA=
+    		if [[ "$assets" == "null" ]]; then
+    			create_assets_dir=false
+    		else
+    			local assetsAFiles="$(echo $assets | jq -r -c '.. | select(has("file")?)')"
+    			assetsA="$(echo $assets | jq -r '.[] | select( type == "string") ')"
+    		fi
+    		if [[ "" != "$assetsAFiles" ]]; then
+    			processFiles "$assetsAFiles"
+    			ret=$?
+    		fi
+    		if [[ "$ret" != "0" ]]; then
+    			break
+    		fi
+    		for _assets in $assetsA; do
+    			debug "$(echo $lib)" "$version" "$_assets" 
+				local tmp_get_assets=$(mktemp)
+				output+=( $tmp_get_assets )
+				get_assets "$(echo $lib)" "$version" "$_assets" > $tmp_get_assets 2>&1 &
+    			pids+="$! "
+    			# ret=$?
+    			# if [[ "$ret" != "0" ]]; then
+    			# 	break
+    			# fi
+    		done
+    		if [[ "$ret" != "0" ]]; then
+    			break
+    		fi
+    	done
+    	if [[ "$ret" != "0" ]]; then
+    		break
+    	fi
+    done
+    c=0
+    echo 'Waiting...'
+    # while [ "$(jobs)" != "" ]; do
+    # 	c=$((c + 1))
+    # 	#echo $c
+    # done
+    for pid in $pids; do
+    	if wait $pid; then
+    		debug "Process with pid: " $pid " finished successfully"
+    	else
+    		error "Process with pid: " $pid " finished in error"
+    		ret=$?
+    		break
+    	fi
+    done
+    for i in "${output[@]}"; do
+    	cat $i
+    	rm -Rf $i
+    done
+    echo 'Finished...'
+    if [[ "$ret" != "0" ]]; then
+    	error "Exiting with status code $ret"
+    	/bin/rm -Rf $tmpdir
+    else
+    	info "Copying from temp directory $tmpdir"
+    	/bin/cp -Rf $tmpdir/* .
+    	ret=$?
+    	if [[ "$ret" == "0" ]]; then
+    		info "Deleting temp directory $tmpdir"
+    		/bin/rm -Rf $tmpdir
+    	fi
+    fi
+    return $ret
 }
 clean () {
 	local conf="$1"
@@ -471,8 +494,8 @@ usage (){
 	info "    --index, index [p/to/exclude]    prints a list of link and script tags"
 	info "    --html, html   [p/to/exclude]    same as \"--index\""
 	echo -e
-    info "    --nodev, nodev                   excludes non '.min.*' files; a flag for \"--list\""
-    info "    --dev, dev                       excludes '.min.*' files; a flag for \"--list\""
+	info "    --nodev, nodev                   excludes non '.min.*' files; a flag for \"--list\""
+	info "    --dev, dev                       excludes '.min.*' files; a flag for \"--list\""
 	echo -e
 	info "    -f, --find, find [ARGS]          perform query on api.cdnjs.com"
 	info "        --search, search [ARGS]      same as \"--search [ARGS]\""
@@ -554,17 +577,17 @@ if (( DO_SEARCH )); then
 fi
 
 if (( DO_ADD )); then
-    param="$ARGS"
-    search="${param%+*}"
-    version="${param#*+}"
+	param="$ARGS"
+	search="${param%+*}"
+	version="${param#*+}"
 	debug "ADDING library $search"
-    
-    unset HAS_VERS
-    if [[ "$param" != "$search" ]]; then
-    	HAS_VERS=1
-    fi
+
+	unset HAS_VERS
+	if [[ "$param" != "$search" ]]; then
+		HAS_VERS=1
+	fi
 	tmpconf=$(mktemp )
-    if (( HAS_VERS )); then
+	if (( HAS_VERS )); then
 		val=$(search_with_version "$search" "$version")
 		tret=$?
 		if [[ "$val" == "" ]]; then
@@ -586,7 +609,7 @@ if (( DO_ADD )); then
 			valfin=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF" )
 			fret=$?
 		fi
-    else
+	else
 		val=$(search_without_version "$search" )
 		tret=$?
 		if [[ "$val" == "" ]]; then
@@ -604,20 +627,20 @@ if (( DO_ADD )); then
 			valfin=$(jq --argjson val "$val" --arg key "$search" '. as $rr | $rr |  $rr.cdnjs.dependencies=( $rr.cdnjs.dependencies + $val ) | .' "$CONF")
 			fret=$?
 		fi
-    fi
-    if [[ "$fret" == "0" ]]; then 
+	fi
+	if [[ "$fret" == "0" ]]; then 
 		echo $valfin | jq '.' > $tmpconf
 		fret=$?
-    	if [[ "$fret" == "0" ]]; then 
+		if [[ "$fret" == "0" ]]; then 
 			if (( NO_COLOR )); then
-    			info "Successfully updated cdnjs config $CONF"
-    		else
-    			info "Successfully updated$GRN cdnjs$BLU config $GRN$CONF$BLU"
+				info "Successfully updated cdnjs config $CONF"
+			else
+				info "Successfully updated$GRN cdnjs$BLU config $GRN$CONF$BLU"
 			fi
-    		mv "$tmpconf" "$CONF"
-    		fret=$?
-    		if [[ "$fret" != "0" ]]; then 
-    			rm $tmpconf
+			mv "$tmpconf" "$CONF"
+			fret=$?
+			if [[ "$fret" != "0" ]]; then 
+				rm $tmpconf
 			fi
 		fi
 	fi
@@ -635,8 +658,8 @@ is_danger_path (){
 	return 1
 }
 if (( DO_REMOVE )) && [[ -f "$CONF" ]]; then
-    param="$ARGS"
-    lib="${param%+*}"
+	param="$ARGS"
+	lib="${param%+*}"
 	debug "REMOVING library $lib"
 	if [[ "$lib" == "" ]]; then
 		if (( NO_COLOR )); then
@@ -646,17 +669,17 @@ if (( DO_REMOVE )) && [[ -f "$CONF" ]]; then
 		fi
 		fret=1
 	else
-        prev=$(jq  --arg lib "$lib" '. as $root | $root | keys[] as $keys | $keys | . as $key | $key | select($root[$key].dependencies[$lib])?| $root[$key].dependencies[$lib] | .' "$CONF")
-        if [[ "$prev" == "" ]]; then
+		prev=$(jq  --arg lib "$lib" '. as $root | $root | keys[] as $keys | $keys | . as $key | $key | select($root[$key].dependencies[$lib])?| $root[$key].dependencies[$lib] | .' "$CONF")
+		if [[ "$prev" == "" ]]; then
 			error "the library '$lib' is not a dependency in $CONF"
-        	fret=1
+			fret=1
 		else
-        	valfin=$(jq  --arg lib "$lib" '. as $root | $root | keys[] as $keys | $keys | . as $key | $key | select($root[$key].dependencies[$lib])? | . as $key | $root |  del( $root[$key].dependencies[$lib] )' "$CONF")
-        	fret=$?
+			valfin=$(jq  --arg lib "$lib" '. as $root | $root | keys[] as $keys | $keys | . as $key | $key | select($root[$key].dependencies[$lib])? | . as $key | $root |  del( $root[$key].dependencies[$lib] )' "$CONF")
+			fret=$?
 		fi
 	fi
-    if [[ "$fret" == "0" ]]; then 
-    	# library exists so remove any synced files if found
+	if [[ "$fret" == "0" ]]; then 
+		# library exists so remove any synced files if found
 		lib_fs_path=$(jq -r --arg lib "$lib" '. as $root | $root | keys[] as $keys | $keys | . as $key | $key | select($root[$key].dependencies[$lib])? | . as $key | $root | $root[$key]["relative-location"] + "/" +$lib' "$CONF" )
 		if [[ -d "$lib_fs_path" ]]; then
 			is_danger_path "$lib_fs_path"
@@ -668,23 +691,23 @@ if (( DO_REMOVE )) && [[ -f "$CONF" ]]; then
 				warn "the path to delete, $lib_fs_path, contains potentially dangerous characters"
 			fi
 		fi
-        if [[ "$fret" == "0" ]]; then 
+		if [[ "$fret" == "0" ]]; then 
 			tmpconf=$(mktemp )
-    		echo $valfin | jq '.' > $tmpconf
-    		fret=$?
-        	if [[ "$fret" == "0" ]]; then 
-    			if (( NO_COLOR )); then
-        			info "Successfully updated cdnjs config $CONF"
-        		else
-        			info "Successfully updated$GRN cdnjs$BLU config $GRN$CONF$BLU"
-    			fi
-        		mv "$tmpconf" "$CONF"
-        		fret=$?
-        		if [[ "$fret" != "0" ]]; then 
-        			rm $tmpconf
-    			fi
-    		fi
-    	fi
+			echo $valfin | jq '.' > $tmpconf
+			fret=$?
+			if [[ "$fret" == "0" ]]; then 
+				if (( NO_COLOR )); then
+					info "Successfully updated cdnjs config $CONF"
+				else
+					info "Successfully updated$GRN cdnjs$BLU config $GRN$CONF$BLU"
+				fi
+				mv "$tmpconf" "$CONF"
+				fret=$?
+				if [[ "$fret" != "0" ]]; then 
+					rm $tmpconf
+				fi
+			fi
+		fi
 	fi
 	if [[ "$fret" != "0" ]]; then
 		exit $fret
