@@ -345,7 +345,7 @@ function get_assets {
 }
 
 search-cdnjs (){
-    local results=$(curl -X GET "https://api.cdnjs.com/libraries?search=$@\&fields=version,description,assets" | jq -r '.results')
+    local results=$(curl -s -X GET "https://api.cdnjs.com/libraries?search=$@\&fields=assets,version,description,assets" | jq -r '[ .results | .[] as $arr | {($arr.name) : { "description": $arr.description,  "latest" :  $arr.assets[0].version, "versions" :  [ $arr.assets[].version] | join( ", ") } } ]')
     echo -n $results
 }
 
