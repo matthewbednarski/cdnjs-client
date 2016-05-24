@@ -1,7 +1,7 @@
 
 # Cdnjs Client
 
-**cdnjs** is a fast, minimalist substitute for [bower](http://bower.io/) in a [node](https://nodejs.org/en/) free environment. It depends on [bash](https://www.gnu.org/software/bash/), [jq](https://stedolan.github.io/jq/) and [curl](http://curl.haxx.se/).
+**cdnjs** is a substitute for [bower](http://bower.io/)/npm in a [node](https://nodejs.org/en/) free environment. It depends on [bash](https://www.gnu.org/software/bash/), [jq](https://stedolan.github.io/jq/) and [curl](http://curl.haxx.se/).
 
 It is mainly a client for [cdnjs](https://cdnjs.com/)/[cdnjs API](https://github.com/cdnjs/cdnjs#api) but it can handle any `GET`'able, publicly-available resources; [gists](https://gist.github.com) in particular . 
 
