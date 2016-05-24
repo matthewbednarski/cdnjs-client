@@ -1,9 +1,10 @@
 
 # Cdnjs Client
 
-**cdnjs** is a minimalist substitute for [bower](http://bower.io/) in a [node](https://nodejs.org/en/) free environment. It depends on [bash](https://www.gnu.org/software/bash/), [jq](https://stedolan.github.io/jq/) and [curl](http://curl.haxx.se/).
+**cdnjs** is a fast, minimalist substitute for [bower](http://bower.io/) in a [node](https://nodejs.org/en/) free environment. It depends on [bash](https://www.gnu.org/software/bash/), [jq](https://stedolan.github.io/jq/) and [curl](http://curl.haxx.se/).
 
 It is mainly a client for [cdnjs](https://cdnjs.com/)/[cdnjs API](https://github.com/cdnjs/cdnjs#api) but it can handle any `GET`'able, publicly-available resources; [gists](https://gist.github.com) in particular . 
+
 
 ## Commands
 
@@ -33,7 +34,7 @@ Usage: cdnjs [OPTIONS] [ARGS]:
     -f, --find, find [ARGS]          perform query on api.cdnjs.com
         --search, search [ARGS]      same as "--search [ARGS]"
     -c, --clean, clean [ARGS]        clean configured relative-location
-    -s, --sync, sync [ARGS]          syncronize to configured relative-locations
+    -s, --sync, sync [ARGS]          asynchronously download configured resources
         --update, update [ARGS]      same as "--sync [ARGS]"
     -a, + [LIB[+VERSION]] [GROUP]    add library with optional version to optional
         --add, add                    group
