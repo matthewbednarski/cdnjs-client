@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Cdnjs-Client by matthewbednarski</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Cdnjs-Client</h1>
+      <h2 class="project-tagline">a client for cdnjs&#39;s api and for GET&#39;able resources. </h2>
+      <a href="https://github.com/matthewbednarski/cdnjs-client" class="btn">View on GitHub</a>
+      <a href="https://github.com/matthewbednarski/cdnjs-client/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/matthewbednarski/cdnjs-client/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="cdnjs-client" class="anchor" href="#cdnjs-client" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Cdnjs Client</h1>
+
+<p><strong>cdnjs</strong> is a substitute for <a href="http://bower.io/">bower</a>/npm in a <a href="https://nodejs.org/en/">node</a> free environment. It depends on <a href="https://www.gnu.org/software/bash/">bash</a>, <a href="https://stedolan.github.io/jq/">jq</a> and <a href="http://curl.haxx.se/">curl</a>.</p>
+
+<p>It is mainly a client for <a href="https://cdnjs.com/">cdnjs</a>/<a href="https://github.com/cdnjs/cdnjs#api">cdnjs API</a> but it can handle any <code>GET</code>'able, publicly-available resources; <a href="https://gist.github.com">gists</a> in particular . </p>
+
+<h2>
+<a id="commands" class="anchor" href="#commands" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Commands</h2>
+
+<h3>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h3>
+
+<p>To print the script's usage:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs --help</pre></div>
+
+<p>Which gives the following output:</p>
+
+<pre><code>$ cdnjs --help
+Usage: cdnjs [OPTIONS] [ARGS]:
+
+    Options:
+    --init, init                     initialize a config file
+    --conf [CONFIG FILE]             use a custom config file
+    --list, list   [/to/exclude]     prints a list of link and script tags
+    --index, index [/to/exclude]     same as "--list"
+    --html, html   [/to/exclude]     same as "--list"
+
+    --nodev, nodev                   excludes non '.min.*' files; a flag for \"--list\"
+    --dev, dev                       excludes '.min.*' files; a flag for \"--list\"
+
+    -f, --find, find [ARGS]          perform query on api.cdnjs.com
+        --search, search [ARGS]      same as "--search [ARGS]"
+    -c, --clean, clean [ARGS]        clean configured relative-location
+    -s, --sync, sync [ARGS]          asynchronously download configured resources
+        --update, update [ARGS]      same as "--sync [ARGS]"
+    -a, + [LIB[+VERSION]] [GROUP]    add library with optional version to optional
+        --add, add                    group
+    -i, --install, install [LIB]     same as "add" plus "sync"
+    -d, --delete, delete [LIB]       removes library from configuration
+    --remove, remove [LIB]           same as "delete"
+
+    -v, --verbose, verbose           print debug/verbose output
+        --debug, debug               same as "--verbose"
+        --nocolor, nocolor           don't echo in color, useful for logging stdout/stderr
+    -h, -?, --help, help             print usage
+</code></pre>
+
+<h3>
+<a id="init" class="anchor" href="#init" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Init</h3>
+
+<p>To initialize a cdnjs configuration file at the default location <code>$(pwd)/.cdnjs</code>:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs init</pre></div>
+
+<p>To specify another location to initialize:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs --conf .another-cdnjs.conf init</pre></div>
+
+<p>To initialize a non-default configuration file in another directory: </p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs --conf <span class="pl-k">~</span>/dir/to/create/.cdnjs init</pre></div>
+
+<p>NB. if the <code>path</code> of the file doesn't exist the script will attempt to create it.</p>
+
+<h3>
+<a id="searchfind" class="anchor" href="#searchfind" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Search/Find</h3>
+
+<p>Requires a parameter <code>"search string"</code>.</p>
+
+<p>To search for libraries containing <code>jquery</code>:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs search jquery</pre></div>
+
+<h3>
+<a id="add" class="anchor" href="#add" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Add</h3>
+
+<p>This command requires a parameter <code>library</code> with an optional suffix <code>+version</code>.</p>
+
+<p>To add the latest version of <code>jquery</code> to your configuration:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs add jquery</pre></div>
+
+<p>To add a specific version of <code>jquery</code> to your configuration use the syntax <code>library[+version]</code></p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs add jquery+1.9.0</pre></div>
+
+<h3>
+<a id="clean" class="anchor" href="#clean" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Clean</h3>
+
+<p>To clean all the paths indicated by the configuration's <code>relative-location</code>:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs clean</pre></div>
+
+<h3>
+<a id="syncupdate" class="anchor" href="#syncupdate" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Sync/Update</h3>
+
+<p>To download the resources indicated by the current configuration:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs sync </pre></div>
+
+<p>NB. the resources will be downloaded to a <em>tmp</em> directory and then moved to the configuration's <code>relative-location</code>'s.</p>
+
+<h3>
+<a id="install" class="anchor" href="#install" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Install</h3>
+
+<p>Performs the <code>--add</code> and <code>--sync</code> commands:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs install jquery
+<span class="pl-c"># </span>
+<span class="pl-c"># same as</span>
+<span class="pl-c"># </span>
+$ cdnjs sync add jquery</pre></div>
+
+<h3>
+<a id="deleteremove" class="anchor" href="#deleteremove" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Delete/Remove</h3>
+
+<p>Removes the indicated library from the configuration and filesystem:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs remove jquery
+<span class="pl-c">#</span>
+<span class="pl-c"># or</span>
+<span class="pl-c"># </span>
+$ cdnjs --delete jquery</pre></div>
+
+<h2>
+<a id="flags" class="anchor" href="#flags" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Flags</h2>
+
+<p>There are a few <em>flags</em> for modifying output or functionality.</p>
+
+<p>Some are <em>general</em> and can be used with any command, such as <code>--conf</code>, <code>--debug</code> or <code>--nocolor</code>.</p>
+
+<p>Others can be used only with <em>specific</em> commands, such as the <code>list</code> command's <code>--dev</code> and <code>--nodev</code> flags.</p>
+
+<h3>
+<a id="conf" class="anchor" href="#conf" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conf</h3>
+
+<p>Any command that requires the use of a configuration file can use the <em>flag</em> <code>--conf</code> to indicate an alternate file.</p>
+
+<p>The commands which require a configuration file are <code>--init</code>, <code>--add</code>, <code>--clean</code> and <code>--sync</code>.</p>
+
+<p>The default configuration file, if <code>--conf</code> is not specified, is <code>.cdnjs</code> in the current working directory.</p>
+
+<p>To initialize a non-default configuration file in the current working directory:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs --conf .another-cdnjs.conf init</pre></div>
+
+<p>To add <code>jquery</code> version <code>2.1.4</code> to a non-default configuration:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs --conf .another-cdnjs.conf --add jquery+2.1.4</pre></div>
+
+<h3>
+<a id="debugverbose" class="anchor" href="#debugverbose" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Debug/Verbose</h3>
+
+<p>To output <code>debug</code> messages add the <code>-v</code> flag to any command:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs sync -v
+<span class="pl-c"># or</span>
+$ cdnjs clean --verbose
+<span class="pl-c"># or</span>
+$ cdnjs clean --debug
+<span class="pl-c"># or</span>
+$ cdnjs clean verbose
+<span class="pl-c"># or</span>
+$ cdnjs clean debug</pre></div>
+
+<h3>
+<a id="no-color" class="anchor" href="#no-color" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>No Color</h3>
+
+<p>To not output <em>color</em> escape codes add the <code>nocolor</code> flag.  This is helpful when you want to log <code>stdout/stderr</code> to file.</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-smi">$cdnjs</span> sync nocolor</pre></div>
+
+<h3>
+<a id="dev" class="anchor" href="#dev" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Dev</h3>
+
+<p>A flag for the <code>--list</code> command, it excludes any <code>min.js</code> or <code>min.css</code> from its output.</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs list --dev</pre></div>
+
+<h3>
+<a id="no-dev" class="anchor" href="#no-dev" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>No-Dev</h3>
+
+<p>A flag for the <code>--list</code> command, it excludes any library not ending in <code>min.js</code> or <code>min.css</code> from its output.</p>
+
+<div class="highlight highlight-source-shell"><pre>$ cdnjs list --nodev
+<span class="pl-c"># or</span>
+$ cdnjs list nodev</pre></div>
+
+<h2>
+<a id="configuration-example" class="anchor" href="#configuration-example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Configuration example:</h2>
+
+<p>An example configuration file is found in this repository at <a href="https://raw.githubusercontent.com/matthewbednarski/cdnjs-client/master/example/.cdnjs">example/.cdnjs</a>.</p>
+
+<p>A file <code>.cdnjs</code> in the <code>pwd</code> or passed to the program through the <code>--conf [conf-file]</code> option.</p>
+
+<h2>
+<a id="setup" class="anchor" href="#setup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setup</h2>
+
+<p><code>cdnjs</code> depends on <code>bash</code>, <code>jq</code>, <code>curl</code> and <code>mktemp</code>.  If those dependencies are met and and <code>cdnjs</code> is on your <code>$PATH</code> everything should be fine.</p>
+
+<h2>
+<a id="windows-setup" class="anchor" href="#windows-setup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Windows Setup</h2>
+
+<p>Since <code>cdnjs</code> is a <code>bash</code> script it will work in a bash environment such as <a href="https://git-for-windows.github.io/">Git for Windows</a>, however it requires <code>jq</code> and <code>mktemp</code> ( not found in <code>Git for Windows</code> pre version <code>1.9.5</code>).</p>
+
+<h3>
+<a id="download-jq" class="anchor" href="#download-jq" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Download Jq</h3>
+
+<p><a href="https://stedolan.github.io/jq/download/">Download the <code>jq</code> binary</a> and rename it to <code>jq.exe</code>. Place it in a folder known to be on your <code>$PATH</code>, eg. if you are using <code>Git for Windows</code> version <code>2.6.1</code> you will have <code>%PROGRAMFILES%\Git\usr\bin</code> in which you can place the <code>jq.exe</code> binary.</p>
+
+<h3>
+<a id="download-cdnjs" class="anchor" href="#download-cdnjs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Download cdnjs</h3>
+
+<p>Download the <a href="https://raw.githubusercontent.com/matthewbednarski/cdnjs/master/cdnjs">latest version of cdnjs</a>. Save it to a folder on you <code>$PATH</code> and make it executable.</p>
+
+<h3>
+<a id="windows-setup-example-steps" class="anchor" href="#windows-setup-example-steps" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Windows Setup Example Steps:</h3>
+
+<ol>
+<li>Edit <code>.bashrc</code>:</li>
+</ol>
+
+<div class="highlight highlight-source-shell"><pre>...
+<span class="pl-k">if</span> [ <span class="pl-k">-d</span> <span class="pl-s"><span class="pl-pds">"</span>~/bin<span class="pl-pds">"</span></span> ]<span class="pl-k">;</span> <span class="pl-k">then</span>
+  <span class="pl-k">export</span> PATH=<span class="pl-smi">$PATH</span>:<span class="pl-k">~</span>/bin
+<span class="pl-k">fi</span>
+...</pre></div>
+
+<ol>
+<li>Then perform the following commands:</li>
+</ol>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-k">if</span> [ <span class="pl-k">!</span> <span class="pl-k">-d</span> <span class="pl-s"><span class="pl-pds">"</span>~/bin<span class="pl-pds">"</span></span> ]<span class="pl-k">;</span> <span class="pl-k">then</span> mkdir <span class="pl-s"><span class="pl-pds">"</span>~/bin<span class="pl-pds">"</span></span><span class="pl-k">;</span> <span class="pl-k">fi</span>
+<span class="pl-c1">cd</span> <span class="pl-k">~</span>/bin
+wget https://raw.githubusercontent.com/matthewbednarski/cdnjs/master/cdnjs
+chmod +x cdnjs
+wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-win64.exe
+mv jq-win64.exe jq.exe
+chmod +x jq.exe
+ls -al</pre></div>
+
+<h2>
+<a id="todo" class="anchor" href="#todo" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Todo</h2>
+
+<ul>
+<li>allow partial <code>clean</code>'s and <code>sync</code>'s by section key (ie <code>cdnjs</code> or <code>gists</code> )</li>
+</ul>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/matthewbednarski/cdnjs-client">Cdnjs-Client</a> is maintained by <a href="https://github.com/matthewbednarski">matthewbednarski</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
