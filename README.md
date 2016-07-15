@@ -17,7 +17,7 @@ $ cdnjs --help
 ```
 Which gives the following output:
 
-```sh
+```
 $ cdnjs --help
 Usage: cdnjs [OPTIONS] [ARGS]:
 
